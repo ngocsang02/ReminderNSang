@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16sp"
+    android:layout_marginEnd="16sp"
+    android:layout_marginTop="8sp"
+    android:layout_marginBottom="8sp"
+    app:cardCornerRadius="8sp"
+    android:id="@+id/cardViewReminderItem"
+    android:minHeight="50sp"
+    app:cardElevation="4sp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:minHeight="50sp"
+        android:id="@+id/constraintLayoutReminderItem"
+        >
+        <!-- Checkbox -->
+
+        <CheckBox
+            android:id="@+id/checkboxReminderItem"
+            android:layout_width="48sp"
+            android:layout_height="48sp"
+            android:layout_marginTop="5dp"
+            android:layout_marginStart="5dp"
+            android:button="@drawable/checkbox_selector"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="MissingConstraints" />
+
+        <TextView
+            android:id="@+id/titleReminderItem"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+            android:text="Title"
+            android:textSize="24sp"
+            app:layout_constraintStart_toEndOf="@+id/checkboxReminderItem"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_percent="0.7" />
+
+
+
+        <TextView
+            android:id="@+id/dateTimeReminderItem"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5sp"
+            android:layout_marginTop="5sp"
+            android:text="Mon, Apr 18 2024"
+            android:textSize="15sp"
+            android:textColor="#DD5746"
+            app:layout_constraintStart_toEndOf="@+id/checkboxReminderItem"
+            app:layout_constraintTop_toBottomOf="@+id/titleReminderItem"
+            app:layout_constraintWidth_percent="0.7" />
+
+
+        <ImageView
+            android:id="@+id/starReminderItem"
+            android:layout_width="30sp"
+            android:layout_height="30sp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/star"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/updateReminderItem"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="5sp"
+            android:layout_marginTop="12sp"
+            android:visibility="gone"
+            android:backgroundTint="@color/white"
+            android:src="@drawable/baseline_edit_24"
+            app:layout_constraintStart_toEndOf="@+id/titleReminderItem"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/deleteReminderItem"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:visibility="gone"
+            android:layout_marginTop="12dp"
+            android:src="@drawable/baseline_delete_24"
+            app:layout_constraintStart_toEndOf="@+id/updateReminderItem"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <RelativeLayout
+            android:id="@+id/expandableReminderItem"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/dateTimeReminderItem">
+
+            <TextView
+                android:id="@+id/noteReminderItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10sp"
+                android:text="Note: "
+                android:textColor="@color/darkGrayColor"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/locationReminderItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="2dp"
+                android:padding="10sp"
+                android:text="Ha Noi"
+                android:textColor="@color/darkGrayColor"
+                android:textSize="18sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/descriptionReminderItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/noteReminderItem"
+                android:layout_marginTop="-2dp"
+                android:padding="5dp"
+                android:paddingStart="10dp"
+                android:text="Description"
+                android:textColor="@color/darkGrayColor"
+                android:textSize="15sp" />
+        </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

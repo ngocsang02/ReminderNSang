@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/importantandtitle"
+        android:layout_alignParentTop="true"
+        android:minHeight="40sp"
+        android:paddingHorizontal="20sp"
+        android:paddingVertical="5sp"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/title"
+            android:padding="10sp"
+            android:text="@string/titleAppBar"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            tools:ignore="RelativeOverlap" />
+        <ImageView
+            android:id="@+id/camera"
+            android:layout_width="40sp"
+            android:layout_height="40sp"
+            android:layout_toStartOf="@+id/important"
+            android:layout_marginEnd="20sp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/baseline_camera_alt_24"
+            android:contentDescription="@string/camera" />
+        <CheckBox
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:id="@+id/important"
+            style="?android:attr/starStyle"
+            android:theme="@style/ImportantColored"
+            />
+    </RelativeLayout>
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/importantandtitle">
+
+        <RelativeLayout
+            android:id="@+id/outside"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/titleField"
+                android:paddingHorizontal="20sp"
+                android:paddingVertical="5sp">
+
+                <EditText
+                    android:id="@+id/edittextTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="17sp"
+                    android:hint="@string/edittextTitle"
+                    android:minLines="3"
+                    android:paddingStart="10sp"
+                    android:background="@drawable/edit_frame"
+                    android:layout_marginTop="10sp"
+                    android:autofillHints=""
+                    tools:ignore="RtlSymmetry" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/titleField"
+                android:id="@+id/timeField"
+                android:background="@drawable/edit_frame"
+                android:paddingHorizontal="20sp"
+                android:layout_marginTop="10sp"
+                android:layout_marginHorizontal="20sp"
+                >
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/time"
+                    android:paddingVertical="10sp">
+
+                    <ImageView
+                        android:layout_width="20sp"
+                        android:layout_height="20sp"
+                        android:id="@+id/iconTime"
+                        android:src="@drawable/baseline_access_time_24"
+                        android:contentDescription="@string/IconTime"
+                        />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/timeTV"
+                        android:hint="@string/textviewTime"
+                        android:layout_toEndOf="@+id/iconTime"
+                        android:textSize="18sp"
+                        android:layout_marginStart="10sp"
+                        />
+
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:id="@+id/dateTimeButton"
+
+                    android:paddingStart="40sp"
+                    android:layout_below="@id/time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:ignore="RtlSymmetry">
+
+<!--                    android:divider="?android:dividerVertical"-->
+<!--                    android:showDividers="middle"-->
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnDate"
+                        android:layout_margin="3sp"
+                        android:layout_width="60sp"
+                        android:layout_height="48sp"
+                        android:background="@null"
+                        android:textAllCaps="false"
+                        app:strokeColor="@color/yellow"
+                        android:textColor="@color/black"
+                        android:text="@string/btnDate"
+                        android:textSize="15sp"
+                        />
+                    <View
+                        android:layout_marginHorizontal="3sp"
+                        android:layout_gravity="center"
+                        android:layout_width="1sp"
+                        android:layout_height="20sp"
+                        android:background="@color/gray"
+                        >
+                    </View>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnTime"
+                        android:layout_margin="3sp"
+                        android:layout_width="60sp"
+                        android:layout_height="48sp"
+                        android:background="@null"
+                        android:textAllCaps="false"
+                        android:textColor="@color/black"
+                        android:textSize="15sp"
+                        android:text="@string/btnTime"
+                        />
+                </LinearLayout>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/clock"
+                    android:gravity="center"
+                    android:layout_marginHorizontal="10sp"
+                    android:layout_below="@id/dateTimeButton">
+
+                    <TimePicker
+                        android:id="@+id/timepicker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="visible"
+                        android:theme="@style/MyTimePickerStyle"
+                        android:timePickerMode="spinner"/>
+                    <!--                    android:visibility="gone"-->
+                    <DatePicker
+                        android:id="@+id/datepicker"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:datePickerMode="spinner"
+                        android:calendarViewShown="false"
+                        android:theme="@style/MyTimePickerStyle"
+                        android:visibility="gone"/>
+<!--                    <CalendarView-->
+<!--                        android:layout_width="300dp"-->
+<!--                        android:layout_height="320dp"-->
+<!--                        />-->
+
+
+                </RelativeLayout>
+
+
+            </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/timeField"
+            android:background="@drawable/edit_frame"
+            android:paddingHorizontal="20sp"
+            android:layout_marginTop="15sp"
+            android:layout_marginHorizontal="20sp"
+            android:id="@+id/locationField"
+            >
+            <ImageView
+                android:id="@+id/iconLocation"
+                android:layout_width="20sp"
+                android:layout_height="20sp"
+                android:layout_centerVertical="true"
+                android:background="@drawable/baseline_location_on_24"
+                android:contentDescription="@string/IconEdittextLocation"/>
+            <EditText
+                android:id="@+id/editLocation"
+                android:layout_width="match_parent"
+                android:layout_height="48sp"
+                android:minLines="2"
+                android:paddingStart="10sp"
+                android:layout_toEndOf="@+id/iconLocation"
+                android:background="@drawable/edit_frame"
+                android:hint="@string/edittextLocation"
+                android:textSize="17sp"
+                tools:ignore="RtlSymmetry" />
+
+
+        </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/locationField"
+                android:background="@drawable/edit_frame"
+                android:paddingHorizontal="20sp"
+                android:layout_marginTop="15sp"
+                android:layout_marginHorizontal="20sp"
+                android:id="@+id/noteField">
+
+                <ImageView
+                    android:id="@+id/iconNote"
+                    android:layout_width="20sp"
+                    android:layout_height="20sp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/baseline_edit_note_24"
+                    android:contentDescription="@string/IconEdittextNote"/>
+                <EditText
+                    android:id="@+id/editNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="48sp"
+                    android:minLines="2"
+                    android:paddingStart="10sp"
+                    android:layout_toEndOf="@+id/iconNote"
+                    android:background="@drawable/edit_frame"
+                    android:hint="@string/edittextNote"
+                    android:textSize="17sp"
+                    tools:ignore="RtlSymmetry" />
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:minHeight="50sp"
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:background="#F6F6F6"
+        >
+        <TextView
+            android:id="@+id/cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="@string/cancel"
+            android:gravity="center"
+            android:padding="10sp"/>
+        <TextView
+            android:id="@+id/save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:hint="@string/save"
+            android:gravity="center"
+            android:padding="10sp"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

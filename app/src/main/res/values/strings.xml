@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">ReminderAppSamSung</string>
+
+    //Save, Cancel
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+
+    //Title Appbar
+    <string name="titleAppBar">Reminder</string>
+    <string name="titleAppBarUpdate">Update</string>
+
+    //Edit Text
+    <string name="edittextTitle">Title</string>
+    <string name="edittextLocation">Location</string>
+    <string name="edittextNote">Note</string>
+
+    //Icon Edit Text
+    <string name="IconEdittextTitle">Icon Title</string>
+    <string name="IconEdittextLocation">Icon Location</string>
+    <string name="IconEdittextNote">Icon Note</string>
+    <string name="IconTime">Icon Time</string>
+
+    //Button Date, Button Time
+    <string name="btnDate">Date</string>
+    <string name="btnTime">Time</string>
+
+    //TextView
+    <string name="textviewTime">Time</string>
+
+    //FAB
+    <string name="fab">FloatActionButton</string>
+    //Anim
+    <string name="open_nav">Open navigation drawer</string>
+    <string name="close_nav">Close navigation drawer</string>
+
+    //ImageView
+    <string name="camera">Camera</string>
+</resources>

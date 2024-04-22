@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="gray">#808080</color>
+    <color name="buttonDateTime">#E5F0F3FF</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorPrimary">#008577</color>
+    <color name="darkGrayColor">#8F8F8F</color>
+    <color name="lavender">#926FE6</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_700">#00796B</color>
+    <color name="blue_royal">#4169E1</color>
+    <color name="orange">#FF6A00</color>
+</resources>
