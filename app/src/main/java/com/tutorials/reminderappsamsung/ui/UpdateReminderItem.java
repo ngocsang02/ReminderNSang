@@ -1,14 +1,17 @@
 package com.tutorials.reminderappsamsung.ui;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -18,6 +21,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -31,6 +35,7 @@ import com.tutorials.reminderappsamsung.data.model.Reminder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
@@ -55,9 +60,14 @@ public class UpdateReminderItem extends AppCompatActivity {
     boolean relativeLayoutTimeChecked = false;
 
 
-    private Calendar calendar = Calendar.getInstance();
+    private final Calendar calendar = Calendar.getInstance();
 
     private Reminder mReminder;
+
+    private static final int REQUEST_CODE_SPEECH_INPUT = 1000;
+    private ImageView microphone;
+
+    String formTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +95,12 @@ public class UpdateReminderItem extends AppCompatActivity {
 
         setupDateTimePicker();
 
+        microphone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSpeechToText();
+            }
+        });
         relativeLayoutTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -176,13 +192,13 @@ public class UpdateReminderItem extends AppCompatActivity {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
                     String formattedDate = dateFormat.format(calendar.getTime());
 
-                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    String formattedTime = timeFormat.format(calendar.getTime());
-                    //Log.v("TAGY+TITLE", strTitle + " " + strTitle.length() + " " + formattedDate + " " + formattedTime);
+//                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+//                    String formattedTime = timeFormat.format(calendar.getTime());
+//                    Log.v("TAGY+TITLE", formattedTime + " ");
                     Intent intent = new Intent(UpdateReminderItem.this, MainActivity.class);
 
                     mReminder.setDate(formattedDate);
-                    mReminder.setTime(formattedTime);
+                    mReminder.setTime(formTime);
                     mReminder.setTitle(strTitle);
                     mReminder.setDescription(strNote);
                     mReminder.setLocation(strLocation);
@@ -211,12 +227,69 @@ public class UpdateReminderItem extends AppCompatActivity {
         timePicker.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
             @Override
             public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+                if(hourOfDay < 10){
+                    formTime = "0"+hourOfDay+":";
+                }else {
+                    formTime = hourOfDay+":";
+                }
+
+                if(minute < 10){
+                    formTime += "0"+minute;
+                }else {
+                    formTime += minute;
+                }
+                //Log.v("TAGY+TITLE1", formTime);
                 save.setEnabled(true);
                 save.setText(R.string.save);
             }
         });
 
 
+    }
+
+    private void startSpeechToText() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN"); // Specify Vietnamese language
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói gì đó...");
+
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Không hỗ trợ nhập âm thanh", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_SPEECH_INPUT) {
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (result != null && !result.isEmpty()) {
+                    String recognizedText = result.get(0);
+                    // Determine which EditText was focused when the microphone was clicked
+                    EditText focusedEditText = getFocusedEditText();
+                    if (focusedEditText != null) {
+                        focusedEditText.setText(recognizedText);
+                    }
+                }
+            }
+        }
+    }
+
+    // Method to determine which EditText was focused
+    private EditText getFocusedEditText() {
+        if (title.hasFocus()) {
+            return title;
+        } else if (location.hasFocus()) {
+            return location;
+        } else if (note.hasFocus()) {
+            return note;
+        } else {
+            return null;
+        }
     }
 
     private void TitleNoteLocationFocus() {
@@ -408,6 +481,8 @@ public class UpdateReminderItem extends AppCompatActivity {
         cancel = findViewById(R.id.cancel);
         save = findViewById(R.id.save);
         timeTV = findViewById(R.id.timeTV);
+
+        microphone = findViewById(R.id.microphone);
     }
 
     private void setupDateTimePicker() {

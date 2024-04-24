@@ -24,14 +24,14 @@
             android:textStyle="bold"
             tools:ignore="RelativeOverlap" />
         <ImageView
-            android:id="@+id/camera"
-            android:layout_width="40sp"
-            android:layout_height="40sp"
+            android:id="@+id/microphone"
+            android:layout_width="30sp"
+            android:layout_height="30sp"
             android:layout_toStartOf="@+id/important"
             android:layout_marginEnd="20sp"
             android:layout_centerVertical="true"
-            android:src="@drawable/baseline_camera_alt_24"
-            android:contentDescription="@string/camera" />
+            android:src="@drawable/microphone"
+            android:contentDescription="@string/microphone" />
         <CheckBox
             android:layout_width="48dp"
             android:layout_height="48dp"
@@ -56,7 +56,6 @@
                 android:id="@+id/titleField"
                 android:paddingHorizontal="20sp"
                 android:paddingVertical="5sp">
-
                 <EditText
                     android:id="@+id/edittextTitle"
                     android:layout_width="match_parent"
@@ -69,6 +68,7 @@
                     android:layout_marginTop="10sp"
                     android:autofillHints=""
                     tools:ignore="RtlSymmetry" />
+
             </RelativeLayout>
 
             <RelativeLayout

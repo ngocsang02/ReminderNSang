@@ -30,11 +30,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/frame_layout">
-
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:context=".MainActivity">
+
 
                 <ImageView
                     android:id="@+id/emptyReminderImage"
@@ -49,18 +49,58 @@
                     android:layout_height="wrap_content"
                     tools:ignore="MissingConstraints" />
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/transparentBGR"
+                    android:background="#66000000"/>
+
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:layout_width="wrap_content"
                     android:id="@+id/fab"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_width="60sp"
+                    android:layout_height="60sp"
+                    app:fabCustomSize="60sp"
+                    android:layout_marginEnd="24sp"
+                    android:layout_marginBottom="24dp"
                     android:contentDescription="@string/fab"
                     android:src="@drawable/baseline_add_24"
                     android:theme="@style/Base.Theme.ReminderAppSamSung"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
+                    app:borderWidth="0sp"
                     tools:ignore="MissingConstraints" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/cameraFab"
+                    android:layout_width="48sp"
+                    android:layout_height="48sp"
+                    android:contentDescription="@string/cameraFab"
+                    android:theme="@style/Base.Theme.ReminderAppSamSung"
+                    android:layout_marginEnd="30sp"
+                    android:layout_marginBottom="20sp"
+                    android:src="@drawable/baseline_camera_alt_24"
+                    app:fabCustomSize="48sp"
+                    app:layout_constraintBottom_toTopOf="@+id/newReminderFab"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:backgroundTint="@color/cameraandeditbgr"
+                    app:borderWidth="0sp"
+                    />
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/newReminderFab"
+                    android:layout_width="48sp"
+                    android:layout_height="48sp"
+                    android:layout_marginEnd="30dp"
+                    android:layout_marginBottom="20dp"
+                    android:contentDescription="@string/newReminderFAB"
+                    android:src="@drawable/baseline_edit_24"
+                    app:fabCustomSize="48sp"
+                    app:borderWidth="0sp"
+                    android:theme="@style/Base.Theme.ReminderAppSamSung"
+                    app:layout_constraintBottom_toTopOf="@+id/fab"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:backgroundTint="@color/cameraandeditbgr"
+                    tools:ignore="MissingConstraints" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </FrameLayout>

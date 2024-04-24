@@ -21,8 +21,8 @@ public interface ReminderDAO {
     @Query("SELECT * FROM reminder_table")
     List<Reminder> getAllReminder();
 
-    @Query("SELECT * FROM reminder_table WHERE reminder_title=:title")
-    List<Reminder> checkReminder(String title);
+    @Query("SELECT * FROM reminder_table WHERE (reminder_title=:title AND reminder_date=:date AND reminder_time=:time AND reminder_location=:location AND reminder_description=:description)")
+    List<Reminder> checkReminder(String date, String time, String title, String location, String description);
 
     @Update
     void updateReminderItem(Reminder reminder);

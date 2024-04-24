@@ -2,6 +2,10 @@ package com.tutorials.reminderappsamsung.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.StrikethroughSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,12 +13,12 @@ import android.widget.Filter;
 import android.widget.Filterable;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tutorials.reminderappsamsung.R;
 import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
 import com.tutorials.reminderappsamsung.data.model.Reminder;
-import com.tutorials.reminderappsamsung.ui.UpdateReminderItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,19 +69,45 @@ public class Adapter extends RecyclerView.Adapter<MyViewHolder> implements Filte
     @SuppressLint({"SetTextI18n", "NotifyDataSetChanged"})
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, @SuppressLint("RecyclerView") int position) {
-        holder.titleReminderItem.setText(reminderList.get(position).getTitle());
-        holder.dateTimeReminderItem.setText(reminderList.get(position).getDate() + " " + reminderList.get(position).getTime());
+
+        holder.noteReminderItem.setVisibility(View.VISIBLE);
+        holder.defaultNote.setVisibility(View.VISIBLE);
+        holder.locationReminderItem.setVisibility(View.VISIBLE);
+
+        if(reminderList.get(position).getState() == 0){
+            holder.cardViewReminderItem.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.white)));
+            holder.titleReminderItem.setText(reminderList.get(position).getTitle());
+            holder.dateTimeReminderItem.setText(reminderList.get(position).getDate() + " " + reminderList.get(position).getTime());
+            holder.locationReminderItem.setText(reminderList.get(position).getLocation());
+
+            holder.dateTimeReminderItem.setTextColor(ContextCompat.getColor(context, R.color.datetime));
+            holder.titleReminderItem.setTextColor(ContextCompat.getColor(context, R.color.black));
+
+        }else if(reminderList.get(position).getState() == 1){
+            holder.titleReminderItem.setText(StrikeThrough(reminderList.get(position).getTitle()));
+            holder.locationReminderItem.setText(StrikeThrough(reminderList.get(position).getLocation()));
+            holder.dateTimeReminderItem.setText(StrikeThrough(reminderList.get(position).getDate() + " " + reminderList.get(position).getTime()));
+
+            holder.dateTimeReminderItem.setTextColor(ContextCompat.getColor(context, R.color.darkGrayColor));
+            holder.titleReminderItem.setTextColor(ContextCompat.getColor(context, R.color.darkGrayColor));
+        }
+
+        //Location
         if (reminderList.get(position).getLocation().equals("")){
             holder.locationReminderItem.setVisibility(View.GONE);
-        }else {
-            holder.locationReminderItem.setText(reminderList.get(position).getLocation());
         }
+
         if (reminderList.get(position).getDescription().equals("")){
             holder.noteReminderItem.setVisibility(View.GONE);
             holder.defaultNote.setVisibility(View.GONE);
-        }else {
+        }else if(reminderList.get(position).getState() == 0){
             holder.noteReminderItem.setText(reminderList.get(position).getDescription());
+            holder.defaultNote.setText("Note:");
+        }else if(reminderList.get(position).getState() == 1){
+            holder.noteReminderItem.setText(StrikeThrough(reminderList.get(position).getDescription()));
+            holder.defaultNote.setText(StrikeThrough("Note:"));
         }
+
 
 //        holder.updateReminderItem.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -158,5 +188,15 @@ public class Adapter extends RecyclerView.Adapter<MyViewHolder> implements Filte
                 notifyDataSetChanged();
             }
         };
+    }
+
+    public SpannableString StrikeThrough(String text){
+        SpannableString spannableString = new SpannableString(text);
+        // Apply StrikethroughSpan to a part of the text
+        int start = 0; // Starting index of the text to strike through
+        int end = text.length(); // Ending index of the text to strike through
+        StrikethroughSpan strikethroughSpan = new StrikethroughSpan();
+        spannableString.setSpan(strikethroughSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return spannableString;
     }
 }

@@ -25,6 +25,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -47,7 +49,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    FloatingActionButton fab;
+    FloatingActionButton fab, newReminderFab, cameraFab;
     List<Reminder> listReminder;
 
     RecyclerView recyclerView;
@@ -62,9 +64,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     ImageView emptyReminder;
 
+    Animation rotateOpen;
+    Animation rotateClose;
+    Animation fromBottom;
+    Animation toBottom;
 
-    Dialog dialog;
-
+    View transparentBGR;
 
 
     @SuppressLint("MissingInflatedId")
@@ -75,8 +80,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         initUI();
         navClickedDrawer();
-
-
 
 
         // Database:
@@ -117,8 +120,52 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AddReminder.class);
-                startActivity(intent);
+
+                if(newReminderFab.getVisibility() == View.GONE){
+                    //Edit
+                    newReminderFab.setVisibility(View.VISIBLE);
+                    newReminderFab.startAnimation(fromBottom);
+
+                    //camera
+                    cameraFab.setVisibility(View.VISIBLE);
+                    cameraFab.startAnimation(fromBottom);
+
+                    //View
+                    transparentBGR.setVisibility(View.VISIBLE);
+
+                    fab.startAnimation(rotateOpen);
+
+                    newReminderFab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            //Toast.makeText(MainActivity.this, "Edit clicked", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(MainActivity.this, AddReminder.class);
+                            startActivity(intent);
+                        }
+                    });
+
+                    cameraFab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(MainActivity.this, "Camera Clicked", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }else {
+
+                    newReminderFab.startAnimation(toBottom);
+                    cameraFab.startAnimation(toBottom);
+
+                    fab.startAnimation(rotateClose);
+                    //edit restart
+                    newReminderFab.setVisibility(View.GONE);
+                    newReminderFab.setOnClickListener(null);
+                    //camera restart
+                    cameraFab.setVisibility(View.GONE);
+                    cameraFab.setOnClickListener(null);
+                    //View
+                    transparentBGR.setVisibility(View.GONE);
+                }
             }
         });
 
@@ -127,15 +174,41 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void initUI() {
+        //fab
         fab = findViewById(R.id.fab);
+        newReminderFab = findViewById(R.id.newReminderFab);
+        cameraFab = findViewById(R.id.cameraFab);
+
+        cameraFab.setVisibility(View.GONE);
+        newReminderFab.setVisibility(View.GONE);
+        //Animation
+
+        rotateOpen = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate_open_anim);
+        rotateClose = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate_close_anim);
+        fromBottom = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.from_bottom_anim);
+        toBottom = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.to_bottom_anim);
+
+        //View
+        transparentBGR = findViewById(R.id.transparentBGR);
+        transparentBGR.setVisibility(View.GONE);
+
+        //Image Empty reminder
         emptyReminder = findViewById(R.id.emptyReminderImage);
         emptyReminder.setVisibility(View.GONE);
+        //Recycler View
         recyclerView = findViewById(R.id.recyclerview);
     }
 
     private void setupAdapter(Context context) {
         //Get data roomdb (initdata)
         listReminder = reminderDAO.getNoCompletedReminder();
+        List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+        if(reminderDAO.getAllReminder().size() < 1){
+            emptyReminder.setVisibility(View.VISIBLE);
+        }
+        for(Reminder rm: completedReminder){
+            listReminder.add(rm);
+        }
         adapter = new Adapter(listReminder, context, new Adapter.ClickUpdateItemReminder(){
             @Override
             public void updateItemReminder(Reminder reminder){
@@ -164,9 +237,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void clickUpdateReminderNoCompletedItem(Reminder reminder) {
         reminder.setState(0);
         reminderDAO.updateReminderItem(reminder);
-        Toast.makeText(MainActivity.this, "Update reminder successfully", Toast.LENGTH_SHORT).show();
-        listReminder = reminderDAO.getCompletedReminder();
-        adapter.setData(listReminder);
+        List<Reminder> noCompletedReminder = reminderDAO.getNoCompletedReminder();
+        List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+        noCompletedReminder.addAll(completedReminder);
+        adapter.setData(noCompletedReminder);
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
@@ -175,9 +249,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void clickUpdateReminderCompletedItem(Reminder reminder) {
         reminder.setState(1);
         reminderDAO.updateReminderItem(reminder);
-        Toast.makeText(MainActivity.this, "Update reminder successfully", Toast.LENGTH_SHORT).show();
-        listReminder = reminderDAO.getNoCompletedReminder();
-        adapter.setData(listReminder);
+        List<Reminder> noCompletedReminder = reminderDAO.getNoCompletedReminder();
+        List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+        noCompletedReminder.addAll(completedReminder);
+        adapter.setData(noCompletedReminder);
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
@@ -244,9 +319,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //reminder with title ton tai chua
 
-    private boolean isReminderExist(String title){
-        List<Reminder> listCheck = reminderDAO.checkReminder(title);
-        return listCheck != null && listCheck.isEmpty();
+    private boolean isReminderExist(String date, String time, String title, String location, String description){
+        List<Reminder> listCheck = ReminderDatabase.getInstance(this).getReminderDAO().checkReminder(date, time, title, location, description);
+        return listCheck != null && !listCheck.isEmpty();
     }
     @SuppressLint("RestrictedApi")
     private void navClickedDrawer() {
@@ -276,8 +351,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.nav_all) {
             getSupportActionBar().setTitle("All");
             //showToast("All Clicked");
-
             listReminder = reminderDAO.getNoCompletedReminder();
+            List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+            for(Reminder rm: completedReminder){
+                listReminder.add(rm);
+            }
             adapter.setData(listReminder);
             if(reminderDAO.getAllReminder().size() < 1) {
                 emptyReminder.setVisibility(View.VISIBLE);
@@ -289,14 +367,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // Lấy thời gian hiện tại
             Date currentTime = new Date();
 
+
             // Định dạng thời gian theo "EEE, MMM dd yyyy"
-            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", new Locale("vi", "VN"));
             String formattedDate = sdf.format(currentTime);
+
+            SimpleDateFormat dateFM = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
+            String formattedDate1 = dateFM.format(currentTime);
+
             listReminder = reminderDAO.getAllReminder();
             List<Reminder> reminderToday = new ArrayList<>();
 
+
+
             for(Reminder rm: listReminder){
-                if(rm.getDate().equals(formattedDate)){
+                //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
+                if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
                     reminderToday.add(rm);
                 }
             }
@@ -309,7 +395,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             getSupportActionBar().setTitle("Scheduled");
             //showToast("Scheduled Clicked");
 
-            listReminder = reminderDAO.getAllReminder();
+            listReminder = reminderDAO.getNoCompletedReminder();
             adapter.setData(listReminder);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);
@@ -340,6 +426,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -374,6 +461,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if(cameraFab.getVisibility() == View.VISIBLE){
+            newReminderFab.startAnimation(toBottom);
+            cameraFab.startAnimation(toBottom);
+
+            fab.startAnimation(rotateClose);
+            //edit restart
+            newReminderFab.setVisibility(View.GONE);
+            newReminderFab.setOnClickListener(null);
+            //camera restart
+            cameraFab.setVisibility(View.GONE);
+            cameraFab.setOnClickListener(null);
+            //View
+            transparentBGR.setVisibility(View.GONE);
+        }else {
+            super.onBackPressed();
+        }
     }
 }
 

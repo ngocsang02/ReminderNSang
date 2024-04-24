@@ -29,10 +29,15 @@
 
     //FAB
     <string name="fab">FloatActionButton</string>
+    <string name="cameraFab">FAB Camera</string>
+    <string name="newReminderFAB">FAB new Reminder</string>
+
     //Anim
     <string name="open_nav">Open navigation drawer</string>
     <string name="close_nav">Close navigation drawer</string>
 
     //ImageView
     <string name="camera">Camera</string>
+
+    <string name="microphone">Microphone</string>
 </resources>

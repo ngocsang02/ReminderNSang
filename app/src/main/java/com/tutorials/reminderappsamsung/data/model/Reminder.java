@@ -16,7 +16,7 @@ public class Reminder implements Serializable {
     @ColumnInfo(name = "reminder_date")
     private String date;
 
-    @ColumnInfo()
+    @ColumnInfo(name = "reminder_time")
     private String time;
 
     @ColumnInfo(name = "reminder_title")

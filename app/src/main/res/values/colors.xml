@@ -13,4 +13,7 @@
     <color name="teal_700">#00796B</color>
     <color name="blue_royal">#4169E1</color>
     <color name="orange">#FF6A00</color>
+    <color name="cameraandeditbgr">#FFC107</color>
+    <color name="transparentBGRColor">#66000000</color>
+    <color name="datetime">#DD5746</color>
 </resources>

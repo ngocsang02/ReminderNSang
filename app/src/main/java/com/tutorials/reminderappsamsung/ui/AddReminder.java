@@ -1,12 +1,15 @@
 package com.tutorials.reminderappsamsung.ui;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -31,6 +34,7 @@ import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
 import com.tutorials.reminderappsamsung.data.model.Reminder;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -43,8 +47,6 @@ public class AddReminder extends AppCompatActivity {
     DatePicker datePicker;
     Button date, time;
 
-    ImageView camera;
-
     RelativeLayout relativeLayoutTime, outside;
 
     LinearLayout datetimeButton;
@@ -53,8 +55,10 @@ public class AddReminder extends AppCompatActivity {
 
     boolean relativeLayoutTimeChecked = false;
 
-
     private Calendar selectedDateTime = Calendar.getInstance();
+
+    private static final int REQUEST_CODE_SPEECH_INPUT = 1000;
+    private ImageView microphone;
 
     @SuppressLint({"WrongViewCast", "ResourceAsColor"})
     @Override
@@ -75,9 +79,6 @@ public class AddReminder extends AppCompatActivity {
         date = findViewById(R.id.btnDate);
         time = findViewById(R.id.btnTime);
 
-        //Camera
-        camera = findViewById(R.id.camera);
-
         timePicker.setVisibility(View.GONE);
         datePicker.setVisibility(View.GONE);
         datetimeButton.setVisibility(View.GONE);
@@ -89,13 +90,15 @@ public class AddReminder extends AppCompatActivity {
         cancel = findViewById(R.id.cancel);
         save = findViewById(R.id.save);
         timeTV = findViewById(R.id.timeTV);
+        //Microphone
+        microphone = findViewById(R.id.microphone);
 
         setupDateTimePicker();
 
-        camera.setOnClickListener(new View.OnClickListener() {
+        microphone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(AddReminder.this, "Camera Clicked", Toast.LENGTH_SHORT).show();
+                startSpeechToText();
             }
         });
 
@@ -212,7 +215,7 @@ public class AddReminder extends AppCompatActivity {
                     String formattedTime = timeFormat.format(selectedDateTime.getTime());
                     //Log.v("TAGY+TITLE", strTitle + " " + strTitle.length() + " " + formattedDate + " " + formattedTime);
 
-                    if(isReminderExist(strTitle) == false){
+                    if(isReminderExist(formattedDate, formattedTime, strTitle, strLocation, strNote) == false){
                         boolean checkAddReminder = true;
                         Intent intent = new Intent(AddReminder.this, MainActivity.class);
                         putData(intent, formattedDate, formattedTime, strTitle, strNote, important.isChecked(), strLocation, 0, checkAddReminder);
@@ -238,6 +241,51 @@ public class AddReminder extends AppCompatActivity {
         });
 
 
+    }
+
+    private void startSpeechToText() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN"); // Specify Vietnamese language
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói gì đó...");
+
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Không hỗ trợ nhập âm thanh", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_SPEECH_INPUT) {
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (result != null && !result.isEmpty()) {
+                    String recognizedText = result.get(0);
+                    // Determine which EditText was focused when the microphone was clicked
+                    EditText focusedEditText = getFocusedEditText();
+                    if (focusedEditText != null) {
+                        focusedEditText.setText(recognizedText);
+                    }
+                }
+            }
+        }
+    }
+
+    // Method to determine which EditText was focused
+    private EditText getFocusedEditText() {
+        if (title.hasFocus()) {
+            return title;
+        } else if (location.hasFocus()) {
+            return location;
+        } else if (note.hasFocus()) {
+            return note;
+        } else {
+            return null;
+        }
     }
 
     private void TitleNoteLocationFocus() {
@@ -279,8 +327,8 @@ public class AddReminder extends AppCompatActivity {
         });
     }
 
-    private boolean isReminderExist(String title){
-        List<Reminder> listCheck = ReminderDatabase.getInstance(this).getReminderDAO().checkReminder(title);
+    private boolean isReminderExist(String date, String time, String title, String location, String description){
+        List<Reminder> listCheck = ReminderDatabase.getInstance(this).getReminderDAO().checkReminder(date, time, title, location, description);
         return listCheck != null && !listCheck.isEmpty();
     }
 
