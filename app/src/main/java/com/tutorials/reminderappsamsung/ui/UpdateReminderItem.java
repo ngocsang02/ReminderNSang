@@ -197,8 +197,10 @@ public class UpdateReminderItem extends AppCompatActivity {
 //                    Log.v("TAGY+TITLE", formattedTime + " ");
                     Intent intent = new Intent(UpdateReminderItem.this, MainActivity.class);
 
+                    if(formTime != null){
+                        mReminder.setTime(formTime);
+                    }
                     mReminder.setDate(formattedDate);
-                    mReminder.setTime(formTime);
                     mReminder.setTitle(strTitle);
                     mReminder.setDescription(strNote);
                     mReminder.setLocation(strLocation);

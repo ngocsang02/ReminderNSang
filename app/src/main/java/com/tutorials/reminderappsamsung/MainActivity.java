@@ -275,26 +275,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                         if(getSupportActionBar().getTitle().equals("All")){
                             listReminder = reminderDAO.getNoCompletedReminder();
+                            List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+                            for(Reminder rm: completedReminder){
+                                listReminder.add(rm);
+                            }
                         }
                         if(getSupportActionBar().getTitle().equals("Today")){
                             // Lấy thời gian hiện tại
                             Date currentTime = new Date();
 
+
                             // Định dạng thời gian theo "EEE, MMM dd yyyy"
-                            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
+                            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", new Locale("vi", "VN"));
                             String formattedDate = sdf.format(currentTime);
+
+                            SimpleDateFormat dateFM = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
+                            String formattedDate1 = dateFM.format(currentTime);
+
                             listReminder = reminderDAO.getAllReminder();
                             List<Reminder> reminderToday = new ArrayList<>();
 
                             for(Reminder rm: listReminder){
-                                if(rm.getDate().equals(formattedDate)){
+                                //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
+                                if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
                                     reminderToday.add(rm);
                                 }
                             }
                             listReminder = reminderToday;
                         }
                         if(getSupportActionBar().getTitle().equals("Scheduled")){
-                            listReminder = reminderDAO.getAllReminder();
+                            listReminder = reminderDAO.getNoCompletedReminder();
                         }
                         if(getSupportActionBar().getTitle().equals("Important")){
                             listReminder = reminderDAO.getImportantReminder();
