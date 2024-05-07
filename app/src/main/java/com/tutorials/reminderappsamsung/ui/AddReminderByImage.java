@@ -55,7 +55,7 @@ public class AddReminderByImage extends AppCompatActivity {
 
     TextView cancel, save, timeTV;
 
-    boolean relativeLayoutTimeChecked = false;
+    boolean relativeLayoutTimeChecked = true;
 
     private Calendar calendar = Calendar.getInstance();
 
