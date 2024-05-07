@@ -303,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
+            Log.v("TAGY", "Title: " + title);
             if(title.equals("")){
                 //title is null
                 hour = processHour(hour);
@@ -357,8 +358,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
 //                Log.v("TAGY", "dmy hour: " + daymonthyear + " " + hour);
                 Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
-                reminderDAO.insert(reminder);
-                updateRecyclerView();
+//                reminderDAO.insert(reminder);
+//                updateRecyclerView();
+                Intent intentAddReminderByImage = new Intent(MainActivity.this, AddReminderByImage.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("reminder_item_by_image", reminder);
+                intentAddReminderByImage.putExtras(bundle);
+                startActivity(intentAddReminderByImage);
             }
 
             //Log.v("TAGY", title + " " + daymonthyear + " " + location + " " + hour);

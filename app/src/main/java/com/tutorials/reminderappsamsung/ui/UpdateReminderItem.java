@@ -57,7 +57,7 @@ public class UpdateReminderItem extends AppCompatActivity {
 
     TextView cancel, save, timeTV;
 
-    boolean relativeLayoutTimeChecked = false;
+    boolean relativeLayoutTimeChecked = true;
 
 
     private final Calendar calendar = Calendar.getInstance();
@@ -477,9 +477,9 @@ public class UpdateReminderItem extends AppCompatActivity {
         date = findViewById(R.id.btnDate);
         time = findViewById(R.id.btnTime);
 
-        timePicker.setVisibility(View.GONE);
-        datePicker.setVisibility(View.GONE);
-        datetimeButton.setVisibility(View.GONE);
+//        timePicker.setVisibility(View.GONE);
+//        datePicker.setVisibility(View.GONE);
+//        datetimeButton.setVisibility(View.GONE);
 
 
         outside = findViewById(R.id.outside);
@@ -490,6 +490,42 @@ public class UpdateReminderItem extends AppCompatActivity {
         timeTV = findViewById(R.id.timeTV);
 
         microphone = findViewById(R.id.microphone);
+
+
+        timeTV.setText(R.string.textviewTime);
+        timeTV.setTypeface(null, Typeface.BOLD);
+        relativeLayoutTimeChecked = true;
+        datetimeButton.setVisibility(View.VISIBLE);
+        //set time
+        time.setTextColor(0xFF5BBCFF);
+        timePicker.setVisibility(View.VISIBLE);
+        //set date
+        date.setTextColor(0xFF000000);
+        datePicker.setVisibility(View.GONE);
+
+        date.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(timePicker.getVisibility() == View.VISIBLE){
+                    timePicker.setVisibility(View.GONE);
+                    time.setTextColor(0xFF000000);
+                }
+                date.setTextColor(0xFF5BBCFF);
+                datePicker.setVisibility(View.VISIBLE);
+            }
+        });
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(datePicker.getVisibility() == View.VISIBLE){
+                    datePicker.setVisibility(View.GONE);
+                    date.setTextColor(0xFF000000);
+                }
+                time.setTextColor(0xFF5BBCFF);
+                timePicker.setVisibility(View.VISIBLE);
+            }
+        });
+
     }
 
     private void setupDateTimePicker() {

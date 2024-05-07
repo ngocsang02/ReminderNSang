@@ -41,6 +41,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class AddReminderByImage extends AppCompatActivity {
+
+    TextView titleReminderByImage;
     CheckBox important;
     EditText title, location, note;
     TimePicker timePicker;
@@ -73,18 +75,29 @@ public class AddReminderByImage extends AppCompatActivity {
         mReminder = (Reminder) Objects.requireNonNull(getIntent().getExtras()).get("reminder_item_by_image");
 
         setupDateTimePickerUpdate(mReminder.getDate(), mReminder.getTime());
-        setupTitleLocationNote(mReminder.getLocation());
+        setupTitleLocationNote(mReminder.getTitle(), mReminder.getLocation());
 
         ElementInReminderOnClick();
     }
 
-    private void setupTitleLocationNote(String strlocation) {
+    private void setupTitleLocationNote(String strTitle, String strlocation) {
         if(!strlocation.equals("")){
             location.setText(strlocation);
+        }
+        if(!strTitle.equals("")){
+            title.setText(strTitle);
+            save.setEnabled(true);
+            save.setText("Save");
+        }else {
+            save.setEnabled(false);
         }
     }
 
     private void initById() {
+
+//        titleReminderByImage = findViewById(R.id.title);
+//        titleReminderByImage.setText("Remider By Image");
+
         datetimeButton = findViewById(R.id.dateTimeButton);
         important = findViewById(R.id.important);
         title = findViewById(R.id.edittextTitle);
@@ -98,9 +111,9 @@ public class AddReminderByImage extends AppCompatActivity {
         date = findViewById(R.id.btnDate);
         time = findViewById(R.id.btnTime);
 
-        timePicker.setVisibility(View.GONE);
-        datePicker.setVisibility(View.GONE);
-        datetimeButton.setVisibility(View.GONE);
+//        timePicker.setVisibility(View.GONE);
+//        datePicker.setVisibility(View.GONE);
+//        datetimeButton.setVisibility(View.GONE);
 
 
         outside = findViewById(R.id.outside);
@@ -111,6 +124,40 @@ public class AddReminderByImage extends AppCompatActivity {
         timeTV = findViewById(R.id.timeTV);
         //Microphone
         microphone = findViewById(R.id.microphone);
+
+        timeTV.setText(R.string.textviewTime);
+        timeTV.setTypeface(null, Typeface.BOLD);
+        relativeLayoutTimeChecked = true;
+        datetimeButton.setVisibility(View.VISIBLE);
+        //set time
+        time.setTextColor(0xFF5BBCFF);
+        timePicker.setVisibility(View.VISIBLE);
+        //set date
+        date.setTextColor(0xFF000000);
+        datePicker.setVisibility(View.GONE);
+
+        date.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(timePicker.getVisibility() == View.VISIBLE){
+                    timePicker.setVisibility(View.GONE);
+                    time.setTextColor(0xFF000000);
+                }
+                date.setTextColor(0xFF5BBCFF);
+                datePicker.setVisibility(View.VISIBLE);
+            }
+        });
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(datePicker.getVisibility() == View.VISIBLE){
+                    datePicker.setVisibility(View.GONE);
+                    date.setTextColor(0xFF000000);
+                }
+                time.setTextColor(0xFF5BBCFF);
+                timePicker.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     private void setupDateTimePickerUpdate(String dateString, String timeString) {
@@ -253,8 +300,12 @@ public class AddReminderByImage extends AppCompatActivity {
             }
         });
 
-        // Disable the save button initially
-        save.setEnabled(false);
+//        // Disable the save button initially
+//        if(title.getText().toString().isEmpty()){
+//            save.setEnabled(false);
+//        }else {
+//
+//        }
 
         //co the dung TextUtils.isEmpty(str)
         TextChangedListenerUpdate();
