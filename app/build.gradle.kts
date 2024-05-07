@@ -29,6 +29,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    buildFeatures {
+        mlModelBinding = true
+    }
 }
 
 dependencies {
@@ -46,4 +49,11 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:$room_version")
 
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    implementation("com.google.android.gms:play-services-vision:20.1.3")
+
+    implementation(project(":cropper"))
+
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
 }

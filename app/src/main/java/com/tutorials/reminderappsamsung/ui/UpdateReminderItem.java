@@ -428,31 +428,36 @@ public class UpdateReminderItem extends AppCompatActivity {
 
     private void setupDateTimePickerUpdate(String dateString, String timeString) {
 
-        // Phân tích chuỗi ngày thành các thành phần
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
-        try {
-            calendar.setTime(dateFormat.parse(dateString));
-        } catch (ParseException e) {
-            e.printStackTrace();
+        if(!dateString.equals("")){
+            // Phân tích chuỗi ngày thành các thành phần
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
+            try {
+                calendar.setTime(Objects.requireNonNull(dateFormat.parse(dateString)));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            // Thiết lập DatePicker từ ngày được phân tích
+            datePicker.init(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH), null);
         }
 
-        // Thiết lập DatePicker từ ngày được phân tích
-        datePicker.init(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH), null);
+        if(!timeString.equals("")){
+            // Phân tích chuỗi thời gian thành các thành phần
+            String[] timeParts = timeString.split(":");
+//            Log.v("TAGY", "timeParts " + timeParts[0] + " " + timeParts[1]);
+            int hour = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
 
-        // Phân tích chuỗi thời gian thành các thành phần
-        String[] timeParts = timeString.split(":");
-        int hour = Integer.parseInt(timeParts[0]);
-        int minute = Integer.parseInt(timeParts[1]);
-
-        // Thiết lập TimePicker từ thời gian được phân tích
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            timePicker.setHour(hour);
-            timePicker.setMinute(minute);
-        } else {
-            // Cho các phiên bản Android cũ hơn
-            timePicker.setCurrentHour(hour);
-            timePicker.setCurrentMinute(minute);
+            // Thiết lập TimePicker từ thời gian được phân tích
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                timePicker.setHour(hour);
+                timePicker.setMinute(minute);
+            } else {
+                // Cho các phiên bản Android cũ hơn
+                timePicker.setCurrentHour(hour);
+                timePicker.setCurrentMinute(minute);
+            }
         }
     }
 

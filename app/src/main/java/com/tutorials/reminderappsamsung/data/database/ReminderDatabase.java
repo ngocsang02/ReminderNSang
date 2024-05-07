@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.tutorials.reminderappsamsung.data.model.Reminder;
 
-@Database(entities = {Reminder.class}, version = 2)
+@Database(entities = {Reminder.class}, version = 2, exportSchema = false)
 public abstract class ReminderDatabase extends RoomDatabase {
 
     //version old = 1 new = 2

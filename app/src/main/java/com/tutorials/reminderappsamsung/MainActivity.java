@@ -1,17 +1,20 @@
 package com.tutorials.reminderappsamsung;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -19,8 +22,13 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,18 +39,29 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.internal.NavigationMenu;
 import com.google.android.material.navigation.NavigationView;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 import com.tutorials.reminderappsamsung.adapter.Adapter;
 import com.tutorials.reminderappsamsung.data.database.ReminderDAO;
 import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
 import com.tutorials.reminderappsamsung.data.model.Reminder;
+import com.tutorials.reminderappsamsung.detect.BoundingBox;
+import com.tutorials.reminderappsamsung.detect.Detector;
 import com.tutorials.reminderappsamsung.ui.AddReminder;
+import com.tutorials.reminderappsamsung.ui.AddReminderByImage;
 import com.tutorials.reminderappsamsung.ui.UpdateReminderItem;
 
+import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -72,6 +91,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     View transparentBGR;
 
 
+    private static final int REQUEST_CAMERA_CODE = 100;
+
+    Bitmap bitmap;
+
+    Detector detector;
+
+    private Calendar calendar = Calendar.getInstance();
+
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         initUI();
         navClickedDrawer();
 
+        checkRequestCamera();
 
         // Database:
         ReminderDatabase db = ReminderDatabase.getInstance(this);
@@ -147,30 +176,248 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     cameraFab.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Toast.makeText(MainActivity.this, "Camera Clicked", Toast.LENGTH_SHORT).show();
+                            selectImage();
+                            //Toast.makeText(MainActivity.this, "Camera Clicked", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    transparentBGR.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            hideFab();
                         }
                     });
 
                 }else {
-
-                    newReminderFab.startAnimation(toBottom);
-                    cameraFab.startAnimation(toBottom);
-
-                    fab.startAnimation(rotateClose);
-                    //edit restart
-                    newReminderFab.setVisibility(View.GONE);
-                    newReminderFab.setOnClickListener(null);
-                    //camera restart
-                    cameraFab.setVisibility(View.GONE);
-                    cameraFab.setOnClickListener(null);
-                    //View
-                    transparentBGR.setVisibility(View.GONE);
+                    hideFab();
                 }
             }
         });
 
 
         setupAdapter(this);
+    }
+
+    private void hideFab() {
+        newReminderFab.startAnimation(toBottom);
+        cameraFab.startAnimation(toBottom);
+
+        fab.startAnimation(rotateClose);
+        //edit restart
+        newReminderFab.setVisibility(View.GONE);
+        newReminderFab.setOnClickListener(null);
+        //camera restart
+        cameraFab.setVisibility(View.GONE);
+        cameraFab.setOnClickListener(null);
+        //View
+        transparentBGR.setVisibility(View.GONE);
+    }
+
+    private void selectImage() {
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .start(this);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (result != null){
+                Uri resultUri = result.getUri();
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri);
+//                Bitmap image = null;
+//                image = Bitmap.createScaledBitmap(bitmap, 640, 640, false);
+                    classifyImage(bitmap);
+//                getTextFromImage(bitmap);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }else {
+                // Không có kết quả hình ảnh được chọn, chuyển về MainActivity
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish(); // Đóng Activity hiện tại nếu bạn không muốn quay lại nó khi chuyển về MainActivity
+            }
+        }
+    }
+
+    private void classifyImage(Bitmap frame) {
+        detector = new Detector(getBaseContext(), "poster.tflite", "labels.txt");
+        detector.setup();
+        List<BoundingBox> boundingBoxes = detector.detect(frame);
+
+        if(boundingBoxes.isEmpty()){
+            Intent intent = new Intent(MainActivity.this, AddReminder.class);
+            startActivity(intent);
+        }else {
+            String title = "";
+            String daymonthyear = "";
+            String location = "";
+            String hour = "";
+            for(BoundingBox bb: boundingBoxes){
+                if(bb.clsName.equals("Title")){
+                    Bitmap image = Bitmap.createBitmap(frame,
+                            (int) (bb.x1*frame.getWidth()),
+                            (int) (bb.y1*frame.getHeight()),
+                            (int) (bb.x2*frame.getWidth() - bb.x1*frame.getWidth()),
+                            (int) (bb.y2*frame.getHeight() - bb.y1*frame.getHeight()));
+                    title = getTextFromImage(image);
+                    title = title.replaceAll("\n", " ");
+                    title = title.trim();
+                }
+                if(bb.clsName.equals("DayMonthYear")){
+                    Bitmap image = Bitmap.createBitmap(frame,
+                            (int) (bb.x1*frame.getWidth()),
+                            (int) (bb.y1*frame.getHeight()),
+                            (int) (bb.x2*frame.getWidth() - bb.x1*frame.getWidth()),
+                            (int) (bb.y2*frame.getHeight() - bb.y1*frame.getHeight()));
+                    daymonthyear = getTextFromImage(image);
+                    daymonthyear = daymonthyear.replaceAll("\n", " ");
+                    daymonthyear = daymonthyear.trim();
+                    String dayYear = daymonthyear.substring(3);
+                    dayYear = dayYear.replaceAll("O", "0");
+                    daymonthyear = daymonthyear.substring(0, 3) + dayYear;
+                }
+                if(bb.clsName.equals("Location")){
+                    Bitmap image = Bitmap.createBitmap(frame,
+                            (int) (bb.x1*frame.getWidth()),
+                            (int) (bb.y1*frame.getHeight()),
+                            (int) (bb.x2*frame.getWidth() - bb.x1*frame.getWidth()),
+                            (int) (bb.y2*frame.getHeight() - bb.y1*frame.getHeight()));
+                    location = getTextFromImage(image);
+                    location = location.replaceAll("\n", " ");
+                    location = location.trim();
+                }
+                if(bb.clsName.equals("Hour")){
+                    Bitmap image = Bitmap.createBitmap(frame,
+                            (int) (bb.x1*frame.getWidth()),
+                            (int) (bb.y1*frame.getHeight()),
+                            (int) (bb.x2*frame.getWidth() - bb.x1*frame.getWidth()),
+                            (int) (bb.y2*frame.getHeight() - bb.y1*frame.getHeight()));
+                    hour = getTextFromImage(image);
+                    hour = hour.replaceAll("\n", " ");
+                    hour = hour.trim();
+                }
+            }
+
+            if(title.equals("")){
+                //title is null
+                hour = processHour(hour);
+//                Log.v("TAGY", "Hour2 " + hour + " " + hour.length());
+//                hour = "20:10";
+                Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
+                Intent intentAddReminderByImage = new Intent(MainActivity.this, AddReminderByImage.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("reminder_item_by_image", reminder);
+                intentAddReminderByImage.putExtras(bundle);
+                startActivity(intentAddReminderByImage);
+            }else {
+                //title is not null
+                if(daymonthyear.equals("")){
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
+                    String formattedDate = dateFormat.format(calendar.getTime());
+                    daymonthyear = formattedDate;
+                }else {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
+                    String formattedDate = dateFormat.format(calendar.getTime());
+                    String check = formattedDate.substring(0, 12);
+                    if(check.contains("thg")){
+                        SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+                        SimpleDateFormat outputFormat = new SimpleDateFormat("EEE, 'thg' M dd yyyy", Locale.forLanguageTag("vi"));
+
+                        try {
+                            Date date = inputFormat.parse(daymonthyear);
+                            String outputDate = outputFormat.format(date);
+                            daymonthyear = outputDate;
+                        } catch (java.text.ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }else {
+                        SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+                        SimpleDateFormat outputFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.ENGLISH);
+
+                        try {
+                            Date date = inputFormat.parse(daymonthyear);
+                            String outputDate = outputFormat.format(date);
+                            daymonthyear = outputDate;
+                        } catch (java.text.ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if(hour.equals("")){
+                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                    String formattedTime = timeFormat.format(calendar.getTime());
+                    hour = formattedTime;
+                }else {
+                    hour = processHour(hour);
+                }
+//                Log.v("TAGY", "dmy hour: " + daymonthyear + " " + hour);
+                Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
+                reminderDAO.insert(reminder);
+                updateRecyclerView();
+            }
+
+            //Log.v("TAGY", title + " " + daymonthyear + " " + location + " " + hour);
+        }
+    }
+
+    private String processHour(String hour){
+        hour = hour.replaceAll("O", "0");
+        if(hour.length() == 8){
+            if(hour.contains("AM")){
+                int h = Integer.parseInt(hour.substring(0, 2));
+                if(h < 10){
+                    return "0" + h +hour.substring(2, 5);
+                }else {
+                    return h + hour.substring(2, 5);
+                }
+            }else {
+                int h = Integer.parseInt(hour.substring(0, 2));
+                h = (h + 12) % 24;
+                if(h < 10){
+                    return "0" + h +hour.substring(2, 5);
+                }else {
+                    return h + hour.substring(2, 5);
+                }
+            }
+        }else {
+            return "";
+        }
+    }
+
+    private String getTextFromImage(Bitmap bm){
+        TextRecognizer recognizer = new TextRecognizer.Builder(this).build();
+        if(!recognizer.isOperational()){
+            Toast.makeText(this, "Error Occurred!!!", Toast.LENGTH_SHORT).show();
+            return "";
+        }else {
+            Frame frame = new Frame.Builder().setBitmap(bm).build();
+            SparseArray<TextBlock> textBlockSparseArray = recognizer.detect(frame);
+            StringBuilder stringBuilder = new StringBuilder();
+            for(int i = 0; i < textBlockSparseArray.size(); i++){
+                TextBlock textBlock = textBlockSparseArray.valueAt(i);
+                stringBuilder.append(textBlock.getValue());
+                stringBuilder.append("\n");
+            }
+//            Log.v("TAGY", stringBuilder.toString());
+            return stringBuilder.toString();
+        }
+    }
+
+    private void checkRequestCamera() {
+        //check xem da duoc cap quyen truy cap camera chua
+        if(ContextCompat.checkSelfPermission(
+                MainActivity.this,
+                android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            //chua duoc cap phep
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                    Manifest.permission.CAMERA
+            }, REQUEST_CAMERA_CODE);
+        }
     }
 
     private void initUI() {
@@ -270,53 +517,57 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         reminderDAO.deleteReminderItem(reminder);
                         Toast.makeText(MainActivity.this, "Delete reminder successfully", Toast.LENGTH_SHORT).show();
 
-                        if(getSupportActionBar().getTitle().equals("Completed")){
-                            listReminder = reminderDAO.getCompletedReminder();
-                        }
-                        if(getSupportActionBar().getTitle().equals("All")){
-                            listReminder = reminderDAO.getNoCompletedReminder();
-                            List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
-                            for(Reminder rm: completedReminder){
-                                listReminder.add(rm);
-                            }
-                        }
-                        if(getSupportActionBar().getTitle().equals("Today")){
-                            // Lấy thời gian hiện tại
-                            Date currentTime = new Date();
-
-
-                            // Định dạng thời gian theo "EEE, MMM dd yyyy"
-                            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", new Locale("vi", "VN"));
-                            String formattedDate = sdf.format(currentTime);
-
-                            SimpleDateFormat dateFM = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
-                            String formattedDate1 = dateFM.format(currentTime);
-
-                            listReminder = reminderDAO.getAllReminder();
-                            List<Reminder> reminderToday = new ArrayList<>();
-
-                            for(Reminder rm: listReminder){
-                                //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
-                                if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
-                                    reminderToday.add(rm);
-                                }
-                            }
-                            listReminder = reminderToday;
-                        }
-                        if(getSupportActionBar().getTitle().equals("Scheduled")){
-                            listReminder = reminderDAO.getNoCompletedReminder();
-                        }
-                        if(getSupportActionBar().getTitle().equals("Important")){
-                            listReminder = reminderDAO.getImportantReminder();
-                        }
-                        adapter.setData(listReminder);
-                        if(reminderDAO.getAllReminder().size() < 1){
-                            emptyReminder.setVisibility(View.VISIBLE);
-                        }
+                        updateRecyclerView();
                     }
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    private void updateRecyclerView() {
+        if(getSupportActionBar().getTitle().equals("Completed")){
+            listReminder = reminderDAO.getCompletedReminder();
+        }
+        if(getSupportActionBar().getTitle().equals("All")){
+            listReminder = reminderDAO.getNoCompletedReminder();
+            List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
+            for(Reminder rm: completedReminder){
+                listReminder.add(rm);
+            }
+        }
+        if(getSupportActionBar().getTitle().equals("Today")){
+            // Lấy thời gian hiện tại
+            Date currentTime = new Date();
+
+
+            // Định dạng thời gian theo "EEE, MMM dd yyyy"
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd yyyy", new Locale("vi", "VN"));
+            String formattedDate = sdf.format(currentTime);
+
+            SimpleDateFormat dateFM = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.US);
+            String formattedDate1 = dateFM.format(currentTime);
+
+            listReminder = reminderDAO.getAllReminder();
+            List<Reminder> reminderToday = new ArrayList<>();
+
+            for(Reminder rm: listReminder){
+                //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
+                if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
+                    reminderToday.add(rm);
+                }
+            }
+            listReminder = reminderToday;
+        }
+        if(getSupportActionBar().getTitle().equals("Scheduled")){
+            listReminder = reminderDAO.getNoCompletedReminder();
+        }
+        if(getSupportActionBar().getTitle().equals("Important")){
+            listReminder = reminderDAO.getImportantReminder();
+        }
+        adapter.setData(listReminder);
+        if(reminderDAO.getAllReminder().size() < 1){
+            emptyReminder.setVisibility(View.VISIBLE);
+        }
     }
 
     private void clickUpdateReminderItem(Reminder reminder) {

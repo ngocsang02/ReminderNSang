@@ -15,4 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "ReminderAppSamSung"
 include(":app")
+include(":cropper")
  
