@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -325,7 +326,7 @@ public class AddReminderByImage extends AppCompatActivity {
 //                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 //                    String formattedTime = timeFormat.format(calendar.getTime());
 //                    Log.v("TAGY+TITLE", formattedTime + " ");
-                    Intent intent = new Intent(AddReminderByImage.this, MainActivity.class);
+
 
                     if(formTime != null){
                         mReminder.setTime(formTime);
@@ -335,8 +336,14 @@ public class AddReminderByImage extends AppCompatActivity {
                     mReminder.setDescription(strNote);
                     mReminder.setLocation(strLocation);
                     mReminder.setImportant(important.isChecked());
-                    ReminderDatabase.getInstance(AddReminderByImage.this).getReminderDAO().insert(mReminder);
-                    startActivity(intent);
+
+                    if(!isReminderExist(formattedDate, formTime, strTitle, strLocation, strNote)){
+                        Intent intent = new Intent(AddReminderByImage.this, MainActivity.class);
+                        ReminderDatabase.getInstance(AddReminderByImage.this).getReminderDAO().insert(mReminder);
+                        startActivity(intent);
+                    }else {
+                        Toast.makeText(AddReminderByImage.this, "Reminder exist!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -377,6 +384,11 @@ public class AddReminderByImage extends AppCompatActivity {
         });
 
 
+    }
+
+    private boolean isReminderExist(String date, String time, String title, String location, String description){
+        List<Reminder> listCheck = ReminderDatabase.getInstance(this).getReminderDAO().checkReminder(date, time, title, location, description);
+        return listCheck != null && !listCheck.isEmpty();
     }
 
     private void setupDateTimePicker() {
