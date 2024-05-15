@@ -1,12 +1,21 @@
 package com.tutorials.reminderappsamsung.ui;
 
+import static com.tutorials.reminderappsamsung.MainActivity.REQUEST_PERMISSION_CODE;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -29,14 +38,17 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.tutorials.reminderappsamsung.MainActivity;
+import com.tutorials.reminderappsamsung.Notification.AlarmBrodcast;
 import com.tutorials.reminderappsamsung.R;
 import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
 import com.tutorials.reminderappsamsung.data.model.Reminder;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -206,6 +218,10 @@ public class UpdateReminderItem extends AppCompatActivity {
                     mReminder.setLocation(strLocation);
                     mReminder.setImportant(important.isChecked());
                     ReminderDatabase.getInstance(UpdateReminderItem.this).getReminderDAO().updateReminderItem(mReminder);
+
+                    cancelAlarm(mReminder.getId());
+                    setAlarm(strTitle, formattedDate, formTime, mReminder.getId(), strLocation, strNote);
+
                     startActivity(intent);
                 }
             }
@@ -248,6 +264,62 @@ public class UpdateReminderItem extends AppCompatActivity {
 
 
     }
+
+    private void cancelAlarm(int requestCode) {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(getApplicationContext(), AlarmBrodcast.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT |PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // Cancel the alarm
+        am.cancel(pendingIntent);
+        Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
+        // Show toast or perform any other action
+    }
+
+    private void setAlarm(String text, String date, String time, int id, String strLocation, String strNote) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            String[] permissions = {Manifest.permission.POST_NOTIFICATIONS};
+            requestPermissions(permissions, REQUEST_PERMISSION_CODE);
+        }
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);                   //assigining alaram manager object to set alaram
+
+        Intent intent = new Intent(getApplicationContext(), AlarmBrodcast.class);
+        intent.putExtra("event", text);                                                       //sending data to alarm class to create channel and notification
+        intent.putExtra("time", date);
+        intent.putExtra("date", time);
+        intent.putExtra("idNotification", id);
+        intent.putExtra("location", strLocation);
+        intent.putExtra("description", strNote);
+
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), id, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        String dateandtime = date + " " + time;
+        Log.v("TAGY", dateandtime);
+        DateFormat formatter;
+        if(dateandtime.contains("thg")){
+            formatter = new SimpleDateFormat("EEE, MMM dd yyyy hh:mm", Locale.forLanguageTag("vi"));
+        }else {
+            formatter = new SimpleDateFormat("EEE, MMM dd yyyy hh:mm", Locale.ENGLISH);
+        }
+        try {
+            Date date1 = formatter.parse(dateandtime);
+            Calendar calendar = Calendar.getInstance();
+            assert date1 != null;
+            calendar.setTime(date1);
+//            Log.v("TAGY", "Date: " + date1.getDate() + " " + date1.getHours() + " " + date1.getMinutes());
+            am.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+            Toast.makeText(getApplicationContext(), "Alarm Set", Toast.LENGTH_SHORT).show();
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+//        Intent intentBack = new Intent(getApplicationContext(), MainActivity.class);                //this intent will be called once the setting alaram is completes
+//        intentBack.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//        startActivity(intentBack);                                                                  //navigates from adding reminder activity ot mainactivity
+    }
+
 
     private void startSpeechToText() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);

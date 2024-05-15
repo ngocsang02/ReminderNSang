@@ -16,8 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,6 +49,7 @@ import com.google.android.material.internal.NavigationMenu;
 import com.google.android.material.navigation.NavigationView;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
+import com.tutorials.reminderappsamsung.Notification.AlarmBrodcast;
 import com.tutorials.reminderappsamsung.adapter.Adapter;
 import com.tutorials.reminderappsamsung.data.database.ReminderDAO;
 import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
@@ -68,6 +71,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final int REQUEST_CAMERA_CODE = 100;
+    private static final int REQUEST_NOTIFICATIONS_CODE = 101;
+    public static final int REQUEST_PERMISSION_CODE = 103;
     FloatingActionButton fab, newReminderFab, cameraFab;
     List<Reminder> listReminder;
 
@@ -91,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     View transparentBGR;
 
 
-    private static final int REQUEST_CAMERA_CODE = 100;
 
     Bitmap bitmap;
 
@@ -107,9 +112,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_main);
 
         initUI();
+        createRequestNotify();
         navClickedDrawer();
 
-        checkRequestCamera();
+
 
         // Database:
         ReminderDatabase db = ReminderDatabase.getInstance(this);
@@ -117,28 +123,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //DAO
         reminderDAO = db.getReminderDAO();
 
-        // Nhận Intent đã gửi đến
-        Intent intentGet = getIntent();
-
-        // Nhận biến boolean checkAddReminder từ Intent
-        boolean checkAddReminder = intentGet.getBooleanExtra("CheckReminderAdd", false);
-
-        if(checkAddReminder == true){
-            String DateReminderAdd = intentGet.getStringExtra("DateReminderAdd");
-            String TimeReminderAdd = intentGet.getStringExtra("TimeReminderAdd");
-            String TitleReminderAdd = intentGet.getStringExtra("TitleReminderAdd");
-            String NoteReminderAdd = intentGet.getStringExtra("NoteReminderAdd");
-            String LocationReminderAdd = intentGet.getStringExtra("LocationReminderAdd");
-
-            boolean ImportantReminderAdd = intentGet.getBooleanExtra("ImportantReminderAdd", false);
-            int StateReminderAdd = intentGet.getIntExtra("StateReminderAdd", 0);
-            Reminder rm = new Reminder(
-                    DateReminderAdd, TimeReminderAdd,
-                    TitleReminderAdd,NoteReminderAdd, ImportantReminderAdd,
-                    LocationReminderAdd, StateReminderAdd
-            );
-            reminderDAO.insert(rm);
-        }
+//        // Nhận Intent đã gửi đến
+//        Intent intentGet = getIntent();
+//
+//        // Nhận biến boolean checkAddReminder từ Intent
+//        boolean checkAddReminder = intentGet.getBooleanExtra("CheckReminderAdd", false);
+//
+//        if(checkAddReminder == true){
+//            String DateReminderAdd = intentGet.getStringExtra("DateReminderAdd");
+//            String TimeReminderAdd = intentGet.getStringExtra("TimeReminderAdd");
+//            String TitleReminderAdd = intentGet.getStringExtra("TitleReminderAdd");
+//            String NoteReminderAdd = intentGet.getStringExtra("NoteReminderAdd");
+//            String LocationReminderAdd = intentGet.getStringExtra("LocationReminderAdd");
+//
+//            boolean ImportantReminderAdd = intentGet.getBooleanExtra("ImportantReminderAdd", false);
+//            int StateReminderAdd = intentGet.getIntExtra("StateReminderAdd", 0);
+//            Reminder rm = new Reminder(
+//                    DateReminderAdd, TimeReminderAdd,
+//                    TitleReminderAdd,NoteReminderAdd, ImportantReminderAdd,
+//                    LocationReminderAdd, StateReminderAdd
+//            );
+//            reminderDAO.insert(rm);
+//        }
 
 
 
@@ -198,6 +204,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setupAdapter(this);
     }
 
+    private void createRequestNotify() {
+        if (
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        == PackageManager.PERMISSION_GRANTED
+                        && ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }else {
+            String[] permissions = {Manifest.permission.CAMERA, Manifest.permission.POST_NOTIFICATIONS};
+            requestPermissions(permissions, REQUEST_PERMISSION_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == REQUEST_PERMISSION_CODE){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(this, "Permission Dennied", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+    }
+
     private void hideFab() {
         newReminderFab.startAnimation(toBottom);
         cameraFab.startAnimation(toBottom);
@@ -214,6 +247,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void selectImage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            String[] permissions = {Manifest.permission.CAMERA};
+            requestPermissions(permissions, REQUEST_PERMISSION_CODE);
+        }
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
                 .start(this);
@@ -520,14 +558,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //Delete User
+                        cancelAlarm(reminder.getId());
                         reminderDAO.deleteReminderItem(reminder);
                         Toast.makeText(MainActivity.this, "Delete reminder successfully", Toast.LENGTH_SHORT).show();
-
                         updateRecyclerView();
                     }
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    private void cancelAlarm(int requestCode) {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(getApplicationContext(), AlarmBrodcast.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        // Cancel the alarm
+        am.cancel(pendingIntent);
+        Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
+        // Show toast or perform any other action
     }
 
     private void updateRecyclerView() {
@@ -554,15 +604,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             String formattedDate1 = dateFM.format(currentTime);
 
             listReminder = reminderDAO.getAllReminder();
-            List<Reminder> reminderToday = new ArrayList<>();
+            List<Reminder> reminderTodayComplete = new ArrayList<>();
+            List<Reminder> reminderTodayNoComplete = new ArrayList<>();
 
             for(Reminder rm: listReminder){
                 //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
                 if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
-                    reminderToday.add(rm);
+                    if(rm.getState() == 0){
+                        reminderTodayNoComplete.add(rm);
+                    }else {
+                        reminderTodayComplete.add(rm);
+                    }
                 }
             }
-            listReminder = reminderToday;
+            listReminder = reminderTodayNoComplete;
+            listReminder.addAll(reminderTodayComplete);
         }
         if(getSupportActionBar().getTitle().equals("Scheduled")){
             listReminder = reminderDAO.getNoCompletedReminder();
@@ -643,16 +699,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             String formattedDate1 = dateFM.format(currentTime);
 
             listReminder = reminderDAO.getAllReminder();
-            List<Reminder> reminderToday = new ArrayList<>();
+            List<Reminder> reminderToday;
 
-
+            List<Reminder> reminderTodayComplete = new ArrayList<>();
+            List<Reminder> reminderTodayNoComplete = new ArrayList<>();
 
             for(Reminder rm: listReminder){
                 //Log.v("TAGY123", rm.getDate() + " " + formattedDate);
                 if(rm.getDate().equals(formattedDate) || rm.getDate().equals(formattedDate1)){
-                    reminderToday.add(rm);
+                    if(rm.getState() == 0){
+                        reminderTodayNoComplete.add(rm);
+                    }else {
+                        reminderTodayComplete.add(rm);
+                    }
                 }
             }
+            reminderToday = reminderTodayNoComplete;
+            reminderToday.addAll(reminderTodayComplete);
+
             adapter.setData(reminderToday);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);

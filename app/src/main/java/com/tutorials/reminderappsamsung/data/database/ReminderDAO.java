@@ -35,4 +35,7 @@ public interface ReminderDAO {
 
     @Query("SELECT * FROM reminder_table WHERE reminder_important = true")
     List<Reminder> getImportantReminder();
+
+    @Query("SELECT reminder_id FROM reminder_table ORDER BY reminder_id DESC LIMIT 1")
+    int getLastItemId();
 }

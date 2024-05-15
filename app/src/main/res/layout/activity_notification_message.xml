@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#BFF6C3">
+
+    <TextView
+        android:id="@+id/message_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Title"
+        android:textSize="35sp"
+        android:textColor="#FF6868"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp" />
+
+    <TextView
+        android:id="@+id/message_datetime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="May 14 2024 10:20"
+        android:textSize="25sp"
+        android:textColor="#65B741"
+        android:layout_below="@id/message_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp" />
+
+    <TextView
+        android:id="@+id/message_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Location"
+        android:textSize="22sp"
+        android:textColor="#65B741"
+        android:layout_below="@id/message_datetime"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp" />
+
+    <TextView
+        android:id="@+id/message_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="description"
+        android:textSize="22sp"
+        android:textColor="#527853"
+        android:layout_below="@id/message_location"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp" />
+
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/circular_card_view"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="100sp"
+        app:cardCornerRadius="50dp"
+        app:cardElevation="10sp"
+        app:cardBackgroundColor="#FFDB5C"
+        android:background="@drawable/circle_shape">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/btn_finish_notification"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:paddingStart="17sp"
+                android:paddingTop="10sp"
+                android:paddingEnd="12sp"
+                android:paddingBottom="7sp"
+                android:src="@drawable/tickk" />
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+
+</RelativeLayout>
