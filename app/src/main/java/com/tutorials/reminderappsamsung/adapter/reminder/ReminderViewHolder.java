@@ -1,19 +1,17 @@
-package com.tutorials.reminderappsamsung.adapter;
+package com.tutorials.reminderappsamsung.adapter.reminder;
 
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tutorials.reminderappsamsung.R;
 
-public class MyViewHolder extends RecyclerView.ViewHolder {
+public class ReminderViewHolder extends RecyclerView.ViewHolder {
 
     CheckBox checkBoxReminderItem;
     TextView titleReminderItem, dateTimeReminderItem, locationReminderItem, noteReminderItem, defaultNote;
@@ -22,9 +20,8 @@ public class MyViewHolder extends RecyclerView.ViewHolder {
     CardView cardViewReminderItem;
 
 
-    public MyViewHolder(@NonNull View itemView) {
+    public ReminderViewHolder(@NonNull View itemView) {
         super(itemView);
-
         //Text
         titleReminderItem = itemView.findViewById(R.id.titleReminderItem);
         dateTimeReminderItem = itemView.findViewById(R.id.dateTimeReminderItem);

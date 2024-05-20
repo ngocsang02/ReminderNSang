@@ -1,4 +1,4 @@
-package com.tutorials.reminderappsamsung.adapter;
+package com.tutorials.reminderappsamsung.adapter.searchview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

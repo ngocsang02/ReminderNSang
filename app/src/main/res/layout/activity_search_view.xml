@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.SearchViewActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FDF6FE"
+        android:paddingTop="5sp"
+        android:layout_marginBottom="5sp"
+        android:layout_marginEnd="5sp"
+        android:id="@+id/toolbar_search">
+
+        <!--        <TextView-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:text="Search Reminder"-->
+        <!--            android:textSize="22sp"-->
+        <!--            android:textStyle="bold"-->
+        <!--            android:textColor="@color/white"-->
+        <!--            android:layout_marginStart="10dp"-->
+        <!--            android:layout_centerVertical="true"-->
+        <!--            android:layout_toRightOf="@id/back_btn"/>-->
+
+        <EditText
+            android:id="@+id/search_reminder_input"
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/edit_text_round_corner"
+            android:elevation="4dp"
+            android:textSize="32sp"
+            android:layout_toRightOf="@+id/back_btn"
+            android:layout_toLeftOf="@+id/mic_search_reminder"
+            android:hint="Tìm Kiếm"
+            android:textStyle="bold"
+            android:padding="10dp" />
+
+        <ImageButton
+            android:layout_width="30sp"
+            android:layout_height="42sp"
+            android:paddingStart="15sp"
+            android:layout_marginStart="10sp"
+            android:src="@drawable/baseline_arrow_back_ios_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_centerVertical="true"
+            android:id="@+id/back_btn"
+            android:contentDescription="Back Main" />
+
+        <ImageView
+            android:id="@+id/mic_search_reminder"
+            android:layout_width="wrap_content"
+            android:layout_height="45sp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:src="@drawable/microphone"
+            app:tint="@color/black"
+            android:contentDescription="Micro" />
+
+
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar_search"
+        android:padding="10dp"
+        android:id="@+id/search_reminder_recycler_view"
+        />
+
+    <ImageView
+        android:id="@+id/image_no_reminder"
+        android:layout_width="128sp"
+        android:layout_height="128sp"
+        android:layout_above="@+id/no_reminder"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        android:src="@drawable/no_reminder" />
+
+    <TextView
+        android:id="@+id/no_reminder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="20sp"
+        android:text="No Reminder"
+        android:visibility="gone"
+        android:textColor="@color/black"
+        android:textSize="40sp"
+        android:textStyle="bold" />
+
+
+</RelativeLayout>

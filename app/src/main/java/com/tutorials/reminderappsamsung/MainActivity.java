@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -18,7 +17,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.content.Context;
@@ -34,10 +32,8 @@ import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -45,12 +41,13 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.internal.NavigationMenu;
 import com.google.android.material.navigation.NavigationView;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 import com.tutorials.reminderappsamsung.Notification.AlarmBrodcast;
-import com.tutorials.reminderappsamsung.adapter.Adapter;
+import com.tutorials.reminderappsamsung.adapter.category.Category;
+import com.tutorials.reminderappsamsung.adapter.category.CategoryAdapter;
+import com.tutorials.reminderappsamsung.adapter.searchview.Adapter;
 import com.tutorials.reminderappsamsung.data.database.ReminderDAO;
 import com.tutorials.reminderappsamsung.data.database.ReminderDatabase;
 import com.tutorials.reminderappsamsung.data.model.Reminder;
@@ -58,6 +55,7 @@ import com.tutorials.reminderappsamsung.detect.BoundingBox;
 import com.tutorials.reminderappsamsung.detect.Detector;
 import com.tutorials.reminderappsamsung.ui.AddReminder;
 import com.tutorials.reminderappsamsung.ui.AddReminderByImage;
+import com.tutorials.reminderappsamsung.ui.SearchViewActivity;
 import com.tutorials.reminderappsamsung.ui.UpdateReminderItem;
 
 import java.io.IOException;
@@ -81,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     ReminderDAO reminderDAO;
 
-    Adapter adapter;
+//    Adapter adapter;
 
     DrawerLayout drawerLayout;
 
@@ -103,6 +101,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     Detector detector;
 
     private Calendar calendar = Calendar.getInstance();
+
+    CategoryAdapter adapter;
+
+    List<Category> mListCategory = new ArrayList<>();
+
+    List<Reminder> noCompletePast = new ArrayList<>();
+    List<Reminder> noCompleteFuture = new ArrayList<>();
 
 
     @SuppressLint("MissingInflatedId")
@@ -497,10 +502,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
-        for(Reminder rm: completedReminder){
-            listReminder.add(rm);
+
+        PastAndFutureNoComplete(listReminder);
+
+        Category category1 = new Category("Past", noCompletePast);
+        Category category2 = new Category("No Complete", noCompleteFuture);
+        Category category3 = new Category("Complete", completedReminder);
+        List<Category> categoryList = new ArrayList<>();
+        if(!category1.getReminders().isEmpty()){
+            categoryList.add(category1);
         }
-        adapter = new Adapter(listReminder, context, new Adapter.ClickUpdateItemReminder(){
+        if(!category2.getReminders().isEmpty()){
+            categoryList.add(category2);
+        }
+        if(!category3.getReminders().isEmpty()){
+            categoryList.add(category3);
+        }
+        mListCategory = categoryList;
+        adapter = new CategoryAdapter(mListCategory, context, new Adapter.ClickUpdateItemReminder(){
             @Override
             public void updateItemReminder(Reminder reminder){
                 clickUpdateReminderItem(reminder);
@@ -525,13 +544,69 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         recyclerView.setAdapter(adapter);
     }
 
+    private void PastAndFutureNoComplete(List<Reminder> listReminder){
+        // Ngày hiện tại
+        Date currentDate = new Date();
+        if(!listReminder.isEmpty()){
+            noCompletePast = new ArrayList<>();
+            noCompleteFuture = new ArrayList<>();
+            SimpleDateFormat sdf;
+            if(!listReminder.get(0).getDate().contains("thg")){
+                sdf = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.ENGLISH);
+            }else {
+                sdf = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.forLanguageTag("vi"));
+            }
+            // SimpleDateFormat để phân tích cú pháp ngày
+            Log.v("TAGY", currentDate.toString());
+            // Lọc reminders
+            String currentDateString = sdf.format(currentDate);
+            for (Reminder reminder : listReminder) {
+                try {
+                    Date reminderDate = sdf.parse(reminder.getDate());
+                    assert reminderDate != null;
+                    if (reminderDate.after(currentDate) || currentDateString.equals(reminder.getDate())) {
+                        noCompleteFuture.add(reminder);
+                    } else {
+                        noCompletePast.add(reminder);
+                    }
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }else {
+            noCompletePast = new ArrayList<>();
+            noCompleteFuture = new ArrayList<>();
+        }
+
+    }
+
     private void clickUpdateReminderNoCompletedItem(Reminder reminder) {
         reminder.setState(0);
         reminderDAO.updateReminderItem(reminder);
         List<Reminder> noCompletedReminder = reminderDAO.getNoCompletedReminder();
         List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
-        noCompletedReminder.addAll(completedReminder);
-        adapter.setData(noCompletedReminder);
+        //noCompletedReminder.addAll(completedReminder);
+
+
+        PastAndFutureNoComplete(noCompletedReminder);
+
+        Category category1 = new Category("Past", noCompletePast);
+        Category category2 = new Category("No Complete", noCompleteFuture);
+        Category category3 = new Category("Complete", completedReminder);
+        List<Category> categoryList = new ArrayList<>();
+
+        if(!category1.getReminders().isEmpty()){
+            categoryList.add(category1);
+        }
+        if(!category2.getReminders().isEmpty()){
+            categoryList.add(category2);
+        }
+        if(!category3.getReminders().isEmpty()){
+            categoryList.add(category3);
+        }
+        mListCategory = categoryList;
+
+        adapter.setData(mListCategory);
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
@@ -542,8 +617,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         reminderDAO.updateReminderItem(reminder);
         List<Reminder> noCompletedReminder = reminderDAO.getNoCompletedReminder();
         List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
-        noCompletedReminder.addAll(completedReminder);
-        adapter.setData(noCompletedReminder);
+//        noCompletedReminder.addAll(completedReminder);
+
+        PastAndFutureNoComplete(noCompletedReminder);
+
+        Category category1 = new Category("Past", noCompletePast);
+        Category category2 = new Category("No Complete", noCompleteFuture);
+        Category category3 = new Category("Complete", completedReminder);
+        List<Category> categoryList = new ArrayList<>();
+        if(!category1.getReminders().isEmpty()){
+            categoryList.add(category1);
+        }
+        if(!category2.getReminders().isEmpty()){
+            categoryList.add(category2);
+        }
+        if(!category3.getReminders().isEmpty()){
+            categoryList.add(category3);
+        }
+        mListCategory = categoryList;
+
+        adapter.setData(mListCategory);
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
@@ -583,13 +676,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void updateRecyclerView() {
         if(getSupportActionBar().getTitle().equals("Completed")){
             listReminder = reminderDAO.getCompletedReminder();
+            Category category = new Category("Complete", listReminder);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category.getReminders().isEmpty()){
+                categoryList.add(category);
+            }
+            mListCategory = categoryList;
         }
         if(getSupportActionBar().getTitle().equals("All")){
             listReminder = reminderDAO.getNoCompletedReminder();
             List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
-            for(Reminder rm: completedReminder){
-                listReminder.add(rm);
+//            for(Reminder rm: completedReminder){
+//                listReminder.add(rm);
+//            }
+
+            PastAndFutureNoComplete(listReminder);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            Category category3 = new Category("Complete", completedReminder);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
             }
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
         }
         if(getSupportActionBar().getTitle().equals("Today")){
             // Lấy thời gian hiện tại
@@ -618,15 +734,64 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
             listReminder = reminderTodayNoComplete;
-            listReminder.addAll(reminderTodayComplete);
+//            listReminder.addAll(reminderTodayComplete);
+
+            PastAndFutureNoComplete(listReminder);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            Category category3 = new Category("Complete", reminderTodayComplete);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
+            }
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
         }
         if(getSupportActionBar().getTitle().equals("Scheduled")){
             listReminder = reminderDAO.getNoCompletedReminder();
+            Category category = new Category("Scheduled", listReminder);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category.getReminders().isEmpty()){
+                categoryList.add(category);
+            }
+            mListCategory = categoryList;
         }
         if(getSupportActionBar().getTitle().equals("Important")){
             listReminder = reminderDAO.getImportantReminder();
+
+            List<Reminder> reminderComplete = new ArrayList<>();
+            List<Reminder> reminderNoComplete = new ArrayList<>();
+            for(Reminder rm: listReminder){
+                if(rm.getState() == 0){
+                    reminderNoComplete.add(rm);
+                }else if(rm.getState() == 1){
+                    reminderComplete.add(rm);
+                }
+            }
+            PastAndFutureNoComplete(reminderNoComplete);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            Category category3 = new Category("Complete", reminderComplete);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
+            }
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
         }
-        adapter.setData(listReminder);
+        adapter.setData(mListCategory);
         if(reminderDAO.getAllReminder().size() < 1){
             emptyReminder.setVisibility(View.VISIBLE);
         }
@@ -676,10 +841,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //showToast("All Clicked");
             listReminder = reminderDAO.getNoCompletedReminder();
             List<Reminder> completedReminder = reminderDAO.getCompletedReminder();
-            for(Reminder rm: completedReminder){
-                listReminder.add(rm);
+//            for(Reminder rm: completedReminder){
+//                listReminder.add(rm);
+//            }
+
+            PastAndFutureNoComplete(listReminder);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            Category category3 = new Category("Complete", completedReminder);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
             }
-            adapter.setData(listReminder);
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
+
+            adapter.setData(mListCategory);
             if(reminderDAO.getAllReminder().size() < 1) {
                 emptyReminder.setVisibility(View.VISIBLE);
             }
@@ -715,9 +898,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
             reminderToday = reminderTodayNoComplete;
-            reminderToday.addAll(reminderTodayComplete);
+//            reminderToday.addAll(reminderTodayComplete);
+            Category category2 = new Category("NoComplete", reminderToday);
+            Category category3 = new Category("Complete", reminderTodayComplete);
+            List<Category> categoryList = new ArrayList<>();
+//        categoryList.add(category1);
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
 
-            adapter.setData(reminderToday);
+            adapter.setData(mListCategory);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);
             }
@@ -727,7 +921,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //showToast("Scheduled Clicked");
 
             listReminder = reminderDAO.getNoCompletedReminder();
-            adapter.setData(listReminder);
+
+            PastAndFutureNoComplete(listReminder);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
+            }
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            mListCategory = categoryList;
+
+            adapter.setData(mListCategory);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);
             }
@@ -736,7 +944,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             getSupportActionBar().setTitle("Important");
             //showToast("Important Clicked");
             listReminder = reminderDAO.getImportantReminder();
-            adapter.setData(listReminder);
+
+            List<Reminder> reminderComplete = new ArrayList<>();
+            List<Reminder> reminderNoComplete = new ArrayList<>();
+            for(Reminder rm: listReminder){
+                if(rm.getState() == 0){
+                    reminderNoComplete.add(rm);
+                }else if(rm.getState() == 1){
+                    reminderComplete.add(rm);
+                }
+            }
+            PastAndFutureNoComplete(reminderNoComplete);
+
+            Category category1 = new Category("Past", noCompletePast);
+            Category category2 = new Category("No Complete", noCompleteFuture);
+            Category category3 = new Category("Complete", reminderComplete);
+            List<Category> categoryList = new ArrayList<>();
+            if(!category1.getReminders().isEmpty()){
+                categoryList.add(category1);
+            }
+
+            if(!category2.getReminders().isEmpty()){
+                categoryList.add(category2);
+            }
+            if(!category3.getReminders().isEmpty()){
+                categoryList.add(category3);
+            }
+            mListCategory = categoryList;
+
+            adapter.setData(mListCategory);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);
             }
@@ -745,7 +981,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //showToast("Completed Clicked");
 
             listReminder = reminderDAO.getCompletedReminder();
-            adapter.setData(listReminder);
+
+            Category category = new Category("Complete", listReminder);
+            List<Category> categoryList = new ArrayList<>();
+
+
+            if(!category.getReminders().isEmpty()){
+                categoryList.add(category);
+            }
+
+            mListCategory = categoryList;
+            adapter.setData(mListCategory);
             if(reminderDAO.getAllReminder().size() < 1){
                 emptyReminder.setVisibility(View.VISIBLE);
             }
@@ -759,38 +1005,48 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+//        return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.action_search) {// Show a Toast message
+            Intent intent = new Intent(MainActivity.this, SearchViewActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-        assert searchView != null;
-        searchView.setQueryHint("Search...");
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        searchView.setMaxWidth(Integer.MAX_VALUE);
-
-        searchView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Hide the title
-                getSupportActionBar().setDisplayShowTitleEnabled(false);
-            }
-        });
-
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                adapter.getFilter().filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                adapter.getFilter().filter(newText);
-                return false;
-            }
-        });
+//        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+//        assert searchView != null;
+//        searchView.setQueryHint("Search...");
+//        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+//        searchView.setMaxWidth(Integer.MAX_VALUE);
+//
+//        searchView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // Hide the title
+//                getSupportActionBar().setDisplayShowTitleEnabled(false);
+//            }
+//        });
+//
+//        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//            @Override
+//            public boolean onQueryTextSubmit(String query) {
+//                adapter.getFilter().filter(query);
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onQueryTextChange(String newText) {
+//                adapter.getFilter().filter(newText);
+//                return false;
+//            }
+//        });
         return true;
     }
 
