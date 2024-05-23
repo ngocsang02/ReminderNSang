@@ -22,6 +22,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,8 +36,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
-
-import com.theartofdev.edmodo.cropper.R;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Built-in activity for image cropping.<br>
@@ -45,6 +47,8 @@ import com.theartofdev.edmodo.cropper.R;
 public class CropImageActivity extends AppCompatActivity
         implements CropImageView.OnSetImageUriCompleteListener,
         CropImageView.OnCropImageCompleteListener {
+
+    public static List<BoundingBox> boundingBoxesStatic = new ArrayList<>();
 
     /**
      * The crop image view library widget used in the activity
@@ -77,7 +81,9 @@ public class CropImageActivity extends AppCompatActivity
         mOptions = bundle.getParcelable(CropImage.CROP_IMAGE_EXTRA_OPTIONS);
 
         if (savedInstanceState == null) {
+//            Log.v("TAGYxxxx", "1");
             if (mCropImageUri == null || mCropImageUri.equals(Uri.EMPTY)) {
+//                Log.v("TAGYxxxx", "12");
                 if (CropImage.isExplicitCameraPermissionRequired(this)) {
                     // request permissions and handle the result in onRequestPermissionsResult()
                     requestPermissions(
@@ -85,18 +91,21 @@ public class CropImageActivity extends AppCompatActivity
                             CropImage.CAMERA_CAPTURE_PERMISSIONS_REQUEST_CODE);
                 } else {
                     CropImage.startPickImageActivity(this);
+//                    Log.v("TAGYxxxx", "123");
                 }
             } else if (CropImage.isReadExternalStoragePermissionsRequired(this, mCropImageUri)) {
                 // request permissions and handle the result in onRequestPermissionsResult()
                 requestPermissions(
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         CropImage.PICK_IMAGE_PERMISSIONS_REQUEST_CODE);
+//                Log.v("TAGYxxxx", "1234");
             } else {
                 // no permissions required or already grunted, can start crop image activity
                 mCropImageView.setImageUriAsync(mCropImageUri);
+//                Log.v("TAGYxxxx", "12345");
             }
         }
-
+//        Log.v("TAGYxxxx", "123456");
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             CharSequence title = mOptions != null &&
@@ -233,6 +242,39 @@ public class CropImageActivity extends AppCompatActivity
                 } else {
                     // no permissions required or already grunted, can start crop image activity
                     mCropImageView.setImageUriAsync(mCropImageUri);
+                    try {
+                        if(mCropImageUri != null){
+                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), mCropImageUri);
+                            Detector detector = new Detector(getBaseContext(), "detectposter.tflite", "labels2.txt");
+                            detector.setup();
+                            List<BoundingBox> boundingBoxes = detector.detect(bitmap);
+                            //Log.v("TAGYBitmap", bitmap.getWidth() + " " + bitmap.getHeight());
+                            if(!boundingBoxes.isEmpty()){
+                                boundingBoxesStatic = boundingBoxes;
+//                                for(BoundingBox bb: boundingBoxes){
+//                                    if(bb.clsName.equals("Poster")){
+//                                        Log.v("TAGYxxxx", "1234567");
+//                                        Log.v("TAGYxxxxx", bb.x1*bitmap.getWidth() + " "
+//                                        + bb.y1*bitmap.getHeight() + " " + bb.x2*bitmap.getWidth() + " "
+//                                        + bb.y2*bitmap.getHeight());
+//                                    }
+//                                }
+                                boundingBoxes.get(0).x1 = boundingBoxes.get(0).x1*bitmap.getWidth();
+                                boundingBoxes.get(0).y1 = boundingBoxes.get(0).y1*bitmap.getHeight();
+                                boundingBoxes.get(0).x2 = boundingBoxes.get(0).x2*bitmap.getWidth();
+                                boundingBoxes.get(0).y2 = boundingBoxes.get(0).y2*bitmap.getHeight();
+                                boundingBoxes.get(0).w = bitmap.getWidth();
+                                boundingBoxes.get(0).h = bitmap.getHeight();
+//                                Log.v("TAGYxxxxx", boundingBoxes.get(0).x1 + " "
+//                                        + boundingBoxes.get(0).y1 + " " + boundingBoxes.get(0).x2 + " "
+//                                        + boundingBoxes.get(0).y2);
+                            }else {
+                                boundingBoxesStatic = new ArrayList<>();
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
@@ -248,6 +290,7 @@ public class CropImageActivity extends AppCompatActivity
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // required permissions granted, start crop image activity
                 mCropImageView.setImageUriAsync(mCropImageUri);
+
             } else {
                 Toast.makeText(this, R.string.crop_image_activity_no_permissions, Toast.LENGTH_LONG).show();
                 setResultCancel();
@@ -258,6 +301,7 @@ public class CropImageActivity extends AppCompatActivity
             // Irrespective of whether camera permission was given or not, we show the picker
             // The picker will not add the camera intent if permission is not available
             CropImage.startPickImageActivity(this);
+
         }
     }
 

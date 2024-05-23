@@ -12,6 +12,8 @@
 
 package com.theartofdev.edmodo.cropper;
 
+import static com.theartofdev.edmodo.cropper.CropImageActivity.boundingBoxesStatic;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -515,6 +517,8 @@ public class CropOverlayView extends View {
         float rightLimit = Math.min(BitmapUtils.getRectRight(mBoundsPoints), getWidth());
         float bottomLimit = Math.min(BitmapUtils.getRectBottom(mBoundsPoints), getHeight());
 
+        //Log.v("TAGYRECTF", leftLimit + " " + topLimit + " " + rightLimit + " " + bottomLimit);
+
         if (rightLimit <= leftLimit || bottomLimit <= topLimit) {
             return;
         }
@@ -543,9 +547,9 @@ public class CropOverlayView extends View {
             rect.top = Math.max(topLimit, rect.top);
             rect.right = Math.min(rightLimit, rect.right);
             rect.bottom = Math.min(bottomLimit, rect.bottom);
-
+            //Log.v("TAGYRECTF12345", "true");
         } else if (mFixAspectRatio && rightLimit > leftLimit && bottomLimit > topLimit) {
-
+            //Log.v("TAGYRECTF1234", "true");
             // If the image aspect ratio is wider than the crop aspect ratio,
             // then the image height is the determining initial length. Else, vice-versa.
             float bitmapAspectRatio = (rightLimit - leftLimit) / (bottomLimit - topLimit);
@@ -583,15 +587,29 @@ public class CropOverlayView extends View {
                 rect.bottom = centerY + halfCropHeight;
             }
         } else {
-            // Initialize crop window to have 10% padding w/ respect to image.
-            rect.left = leftLimit + horizontalPadding;
-            rect.top = topLimit + verticalPadding;
-            rect.right = rightLimit - horizontalPadding;
-            rect.bottom = bottomLimit - verticalPadding;
+
+            if(boundingBoxesStatic.isEmpty()){
+                // Initialize crop window to have 10% padding w/ respect to image.
+                rect.left = leftLimit + horizontalPadding;
+                rect.top = topLimit + verticalPadding;
+                rect.right = rightLimit - horizontalPadding;
+                rect.bottom = bottomLimit - verticalPadding;
+                //Log.v("TAGYRECTF123", "false");
+            }else {
+                float xscale = boundingBoxesStatic.get(0).w / (rightLimit - leftLimit);
+                float yscale = boundingBoxesStatic.get(0).h / (bottomLimit - topLimit);
+                rect.left = boundingBoxesStatic.get(0).x1 / xscale;
+                rect.top = (boundingBoxesStatic.get(0).y1 / yscale) + topLimit;
+                rect.right = boundingBoxesStatic.get(0).x2/xscale;
+                rect.bottom = (boundingBoxesStatic.get(0).y2/yscale) + topLimit;
+                //Log.v("TAGYRECTF123", "true");
+            }
+
         }
 
         fixCropWindowRectByRules(rect);
 
+        //Log.v("TAGYRECTF", rect.toString());
         mCropWindowHandler.setRect(rect);
     }
 

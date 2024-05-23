@@ -61,11 +61,18 @@ import com.tutorials.reminderappsamsung.ui.UpdateReminderItem;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -288,17 +295,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void classifyImage(Bitmap frame) {
-        detector = new Detector(getBaseContext(), "poster.tflite", "labels.txt");
+        detector = new Detector(getBaseContext(), "poster2.tflite", "labels.txt");
         detector.setup();
         List<BoundingBox> boundingBoxes = detector.detect(frame);
-
+        String s = getTextFromImage(frame);
+        String textFullPoster = s;
+        String location = "";
+        location = findLocation(textFullPoster);
+        s = s.trim().replaceAll("\\s+", " ");
+        s = replaceString(s);
+        Log.v("TAGY", s);
         if(boundingBoxes.isEmpty()){
             Intent intent = new Intent(MainActivity.this, AddReminder.class);
             startActivity(intent);
         }else {
             String title = "";
             String daymonthyear = "";
-            String location = "";
             String hour = "";
             for(BoundingBox bb: boundingBoxes){
                 if(bb.clsName.equals("Title")){
@@ -320,11 +332,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     daymonthyear = getTextFromImage(image);
                     daymonthyear = daymonthyear.replaceAll("\n", " ");
                     daymonthyear = daymonthyear.trim();
-                    String dayYear = daymonthyear.substring(3);
-                    dayYear = dayYear.replaceAll("O", "0");
-                    daymonthyear = daymonthyear.substring(0, 3) + dayYear;
+                    daymonthyear = convertToDate(daymonthyear, s);
+                    Log.v("TAGY", daymonthyear);
                 }
-                if(bb.clsName.equals("Location")){
+                if(bb.clsName.equals("Location") && location.equals("")){
                     Bitmap image = Bitmap.createBitmap(frame,
                             (int) (bb.x1*frame.getWidth()),
                             (int) (bb.y1*frame.getHeight()),
@@ -343,6 +354,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     hour = getTextFromImage(image);
                     hour = hour.replaceAll("\n", " ");
                     hour = hour.trim();
+                    hour = hour.replaceAll("O", "0");
                 }
             }
 
@@ -350,6 +362,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if(title.equals("")){
                 //title is null
                 hour = processHour(hour);
+                if(hour.equals("")){
+                    hour = findHour(s);
+                    hour = processHour(hour);
+                }
 //                Log.v("TAGY", "Hour2 " + hour + " " + hour.length());
 //                hour = "20:10";
                 Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
@@ -398,6 +414,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     hour = formattedTime;
                 }else {
                     hour = processHour(hour);
+                    if(hour.equals("")){
+                        hour = findHour(s);
+                        hour = processHour(hour);
+                    }
                 }
 //                Log.v("TAGY", "dmy hour: " + daymonthyear + " " + hour);
                 Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
@@ -413,9 +433,117 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //Log.v("TAGY", title + " " + daymonthyear + " " + location + " " + hour);
         }
     }
+    public static String findLocation(String text){
+        List<String> tinhThanh = Arrays.asList(
+                "An Giang",
+                "Bà Rịa",
+                "Vũng Tàu",
+                "Bạc Liêu",
+                "Bắc Giang",
+                "Bắc Kạn",
+                "Bắc Ninh",
+                "Bến Tre",
+                "Bình Định",
+                "Bình Dương",
+                "Bình Phước",
+                "Bình Thuận",
+                "Cà Mau",
+                "Cao Bằng",
+                "Đắk Lắk",
+                "Đắk Nông",
+                "Điện Biên",
+                "Đồng Nai",
+                "Đồng Tháp",
+                "Gia Lai",
+                "Hà Giang",
+                "Hà Nam",
+                "Hà Tĩnh",
+                "Hải Dương",
+                "Hậu Giang",
+                "Hòa Bình",
+                "Hưng Yên",
+                "Khánh Hòa",
+                "Kiên Giang",
+                "Kon Tum",
+                "Lai Châu",
+                "Lâm Đồng",
+                "Lạng Sơn",
+                "Lào Cai",
+                "Long An",
+                "Nam Định",
+                "Nghệ An",
+                "Ninh Bình",
+                "Ninh Thuận",
+                "Phú Thọ",
+                "Phú Yên",
+                "Quảng Bình",
+                "Quảng Nam",
+                "Quảng Ngãi",
+                "Quảng Ninh",
+                "Quảng Trị",
+                "Sóc Trăng",
+                "Sơn La",
+                "Tây Ninh",
+                "Thái Bình",
+                "Thái Nguyên",
+                "Thanh Hóa",
+                "Thừa Thiên Huế",
+                "Tiền Giang",
+                "Trà Vinh",
+                "Tuyên Quang",
+                "Vĩnh Long",
+                "Vĩnh Phúc",
+                "Yên Bái",
+                "Cần Thơ",
+                "Đà Nẵng",
+                "Hải Phòng",
+                "Hà Nội",
+                "Hồ Chí Minh"
+        );
+        String s = "";
+        for (String tt: tinhThanh){
+            if(text.contains(tt)){
+                s = tt;
+                break;
+            }
+        }
+        String result = "";
+        if(!s.equals("")){
+            List<String> stringList = Arrays.asList(text.split("\n"));
+            for(String t: stringList){
+                if(t.contains(s)){
+                    result = t;
+                }
+            }
+        }
+        Log.v("TAGY", result);
+        return result;
+    }
+
+    private String replaceString(String s) {
+//        s = s.replaceAll("/ ", "/");
+//        s = s.replaceAll(" /", "/");
+//        s = s.replaceAll(" / ", "/");
+//
+//        s = s.replaceAll(": ", ":");
+//        s = s.replaceAll(" :", ":");
+//        s = s.replaceAll(" : ", ":");
+//
+//        s = s.replaceAll(". ", ".");
+//        s = s.replaceAll(" .", ".");
+//        s = s.replaceAll(" . ", ".");
+//
+//        s = s.replaceAll("- ", "-");
+//        s = s.replaceAll(" -", "-");
+//        s = s.replaceAll(" - ", "-");
+
+        s = s.replaceAll("\\s*([/:.-])\\s*", "$1");
+        return s;
+    }
 
     private String processHour(String hour){
         hour = hour.replaceAll("O", "0");
+        hour = hour.replaceAll("o", "0");
         if(hour.length() == 8){
             if(hour.contains("AM")){
                 int h = Integer.parseInt(hour.substring(0, 2));
@@ -433,9 +561,37 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     return h + hour.substring(2, 5);
                 }
             }
+        }else if(hour.length() == 5){
+            return hour;
         }else {
             return "";
         }
+    }
+
+    private String findHour(String text) {
+        String[] timePatterns = {
+                "\\b\\d{1,2}:\\d{2}\\s*[AP]M\\b",  // 03:55 PM
+                "\\b\\d{1,2}:\\d{2}\\b"             // 15:10
+        };
+        String a = "";
+        for (String timePattern : timePatterns) {
+            a = findAndConvertTimes(text, timePattern);
+            if(!a.equals("")){
+                return a;
+            }
+        }
+        return a;
+    }
+
+    private String findAndConvertTimes(String text, String timePattern) {
+        Pattern pattern = Pattern.compile(timePattern);
+        Matcher matcher = pattern.matcher(text);
+
+        while (matcher.find()) {
+            String timeString = matcher.group();;
+            return timeString;
+        }
+        return "";
     }
 
     private String getTextFromImage(Bitmap bm){
@@ -455,6 +611,268 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 //            Log.v("TAGY", stringBuilder.toString());
             return stringBuilder.toString();
         }
+    }
+    private static final Map<String, String> monthMap = new HashMap<>();
+
+    static {
+        monthMap.put("Jan", "January");
+        monthMap.put("Feb", "February");
+        monthMap.put("Mar", "March");
+        monthMap.put("Apr", "April");
+        monthMap.put("May", "May");
+        monthMap.put("Jun", "June");
+        monthMap.put("Jul", "July");
+        monthMap.put("Aug", "August");
+        monthMap.put("Sep", "September");
+        monthMap.put("Oct", "October");
+        monthMap.put("Nov", "November");
+        monthMap.put("Dec", "December");
+    }
+    public static String convertToDate(String dateString, String s) {
+//        dateString = "";
+        Date date = null;
+        SimpleDateFormat inputFormat = null;
+        try{
+            if(dateString.contains("/")){
+                dateString = dateString.replaceAll("O", "0");
+                dateString = dateString.replaceAll("o", "0");
+                String[] listDate = dateString.split("/");
+                if(listDate.length == 3){
+                    dateString = listDate[0].trim()+"/"+ listDate[1].trim() +"/"+listDate[2].trim();
+                }else {
+                    dateString = listDate[0].trim() + "/" + listDate[1].trim();
+                }
+                Log.v("TAGY (/):", dateString);
+            } else if (dateString.contains("-")) {
+                String[] listDate = dateString.split("-");
+                listDate[0] = listDate[0].replaceAll("O", "0");
+                listDate[0] = listDate[0].replaceAll("o", "0");
+                if(listDate.length == 3){
+                    listDate[2] = listDate[2].replaceAll("O", "0");
+                    listDate[2] = listDate[2].replaceAll("o", "0");
+                    dateString = listDate[0].trim()+"-"+ listDate[1].trim() +"-"+listDate[2].trim();
+                }else {
+                    dateString = listDate[0].trim() + "-" + listDate[1].trim();
+                }
+                Log.v("TAGY (-):", dateString);
+            } else if (dateString.contains(".")) {
+                dateString = dateString.replaceAll("O", "0");
+                dateString = dateString.replaceAll("o", "0");
+                String[] listDate = dateString.split("\\.");
+                if(listDate.length == 3){
+                    dateString = listDate[0].trim()+"."+ listDate[1].trim() +"."+listDate[2].trim();
+                }else {
+                    dateString = listDate[0].trim() + "." + listDate[1].trim();
+                }
+                Log.v("TAGY (.):", dateString);
+            }else {
+                String[] listDate = dateString.split(" ");
+                StringBuilder d = new StringBuilder(listDate[0]);
+                for (int i = 1; i < listDate.length; i++){
+                    if(listDate[i].length() > 1){
+                        listDate[i] = listDate[i].replaceAll("O", "0");
+                        listDate[i] = listDate[i].replaceAll("o", "0");
+                        d.append(" ").append(listDate[i]);
+                    }
+                }
+                dateString = d.toString();
+                Log.v("TAGY (ok):", dateString);
+            }
+
+            if (dateString.matches("\\d{2}/\\d{2}")) { // 14/03
+                Calendar calendar = Calendar.getInstance();
+                int currentYear = calendar.get(Calendar.YEAR);
+                dateString += "/" + currentYear;
+                inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else if (dateString.matches("\\d{2}/\\d{2}/\\d{4}")) { // 14/03/2024
+                inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else if (dateString.matches("\\d{2}-\\w{3}")) { // 14-Mar
+                Calendar calendar = Calendar.getInstance();
+                int currentYear = calendar.get(Calendar.YEAR);
+                dateString += "-" + currentYear;
+                inputFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else if (dateString.matches("\\d{2}-\\w{3}-\\d{4}")) { // 14-Mar-2024
+                inputFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else if (dateString.matches("\\d{2}\\.\\d{2}\\.\\d{4}")) { // 05.06.2024
+                inputFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else if (dateString.matches("\\w+ \\d{1,2} \\d{4}")) { // February 14 2024
+                inputFormat = new SimpleDateFormat("MMMM dd yyyy", Locale.ENGLISH);
+                date = inputFormat.parse(dateString);
+            } else {
+                throw new ParseException("Unparseable date: " + dateString, 0);
+            }
+            if (date == null) {
+                throw new ParseException("Unparseable date: " + dateString, 0);
+            }
+
+            SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+            return outputFormat.format(date);
+        } catch (Exception e) {
+            // Return current date if parsing fails
+
+            String find = findDMY(s);
+            if(!find.equals("")){
+                try{
+                    if(find.contains("/")){
+                        find = find.replaceAll("O", "0");
+                        find = find.replaceAll("o", "0");
+                        String[] listDate = find.split("/");
+                        if(listDate.length == 3){
+                            find = listDate[0].trim()+"/"+ listDate[1].trim() +"/"+listDate[2].trim();
+                        }else {
+                            find = listDate[0].trim() + "/" + listDate[1].trim();
+                        }
+                        Log.v("TAGY (/):", find);
+                    } else if (find.contains("-")) {
+                        String[] listDate = find.split("-");
+                        listDate[0] = listDate[0].replaceAll("O", "0");
+                        listDate[0] = listDate[0].replaceAll("o", "0");
+                        if(listDate.length == 3){
+                            listDate[2] = listDate[2].replaceAll("O", "0");
+                            listDate[2] = listDate[2].replaceAll("o", "0");
+                            find = listDate[0].trim()+"-"+ listDate[1].trim() +"-"+listDate[2].trim();
+                        }else {
+                            find = listDate[0].trim() + "-" + listDate[1].trim();
+                        }
+                        Log.v("TAGY (-):", find);
+                    } else if (find.contains(".")) {
+                        find = find.replaceAll("O", "0");
+                        find = find.replaceAll("o", "0");
+                        String[] listDate = find.split("\\.");
+                        if(listDate.length == 3){
+                            find = listDate[0].trim()+"."+ listDate[1].trim() +"."+listDate[2].trim();
+                        }else {
+                            find = listDate[0].trim() + "." + listDate[1].trim();
+                        }
+                        Log.v("TAGY (.):", find);
+                    }else {
+                        String[] listDate = find.split(" ");
+                        StringBuilder d = new StringBuilder(listDate[0]);
+                        for (int i = 1; i < listDate.length; i++){
+                            if(listDate[i].length() > 1){
+                                listDate[i] = listDate[i].replaceAll("O", "0");
+                                listDate[i] = listDate[i].replaceAll("o", "0");
+                                d.append(" ").append(listDate[i]);
+                            }
+                        }
+                        find = d.toString();
+                        Log.v("TAGY (ok):", find);
+                    }
+
+                    if (find.matches("\\d{2}/\\d{2}")) { // 14/03
+                        Calendar calendar = Calendar.getInstance();
+                        int currentYear = calendar.get(Calendar.YEAR);
+                        find += "/" + currentYear;
+                        inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else if (find.matches("\\d{2}/\\d{2}/\\d{4}")) { // 14/03/2024
+                        inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else if (find.matches("\\d{2}-\\w{3}")) { // 14-Mar
+                        Calendar calendar = Calendar.getInstance();
+                        int currentYear = calendar.get(Calendar.YEAR);
+                        find += "-" + currentYear;
+                        inputFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else if (find.matches("\\d{2}-\\w{3}-\\d{4}")) { // 14-Mar-2024
+                        inputFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else if (find.matches("\\d{2}\\.\\d{2}\\.\\d{4}")) { // 05.06.2024
+                        inputFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else if (find.matches("\\w+ \\d{1,2} \\d{4}")) { // February 14 2024
+                        inputFormat = new SimpleDateFormat("MMMM dd yyyy", Locale.ENGLISH);
+                        date = inputFormat.parse(find);
+                    } else {
+                        throw new ParseException("Unparseable date: " + find, 0);
+                    }
+                    if (date == null) {
+                        throw new ParseException("Unparseable date: " + find, 0);
+                    }
+                    SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+                    return outputFormat.format(date);
+                } catch (Exception ex) {
+                    SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+                    return outputFormat.format(new Date());
+                }
+            }
+            SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+            return outputFormat.format(new Date());
+        }
+    }
+
+    private static String findDMY(String s) {
+        // Regular expressions for different date formats
+        String[] datePatterns = {
+                "\\b\\w+ \\d{1,2} \\d{4}\\b",         // February 14 2024
+                "\\b\\w{3} \\d{1,2} \\d{4}\\b",       // Feb 14 2024
+                "\\b\\d{2}/\\d{2}/\\d{4}\\b",         // 14/03/2024
+                "\\b\\d{2}/\\d{2}\\b",                // 14/03
+                "\\b\\d{2}-\\w{3}-\\d{4}\\b",         // 14-Mar-2024
+                "\\b\\d{2}-\\w{3}\\b",                // 14-Mar
+                "\\b\\d{2}\\.\\d{2}\\.\\d{4}\\b"      // 05.06.2024
+        };
+        String a = "";
+        for (String datePattern : datePatterns) {
+            a = findAndConvertDates(s, datePattern);
+            if(!a.equals("")){
+                break;
+            }
+        }
+        return a;
+    }
+
+    private static String findAndConvertDates(String text, String datePattern) {
+        Pattern pattern = Pattern.compile(datePattern);
+        Matcher matcher = pattern.matcher(text);
+        Calendar calendar = Calendar.getInstance();
+        while (matcher.find()) {
+            String dateString = matcher.group();
+            // Check if the date is in "dd/MM" or "dd-MMM" format and add the current year
+            if (dateString.matches("\\d{2}/\\d{2}")) {
+                dateString += "/" + calendar.get(Calendar.YEAR);
+            }
+            if(dateString.matches("\\d{2}-\\w{3}")){
+                dateString += "-" + calendar.get(Calendar.YEAR);
+            }
+            String formattedDate = convertDate2(dateString);
+            Log.v("TAGY", "Original date: " + dateString + " | Formatted date: " + formattedDate);
+            return formattedDate;
+        }
+        return "";
+    }
+
+    private static String convertDate2(String dateString) {
+        String[] dateFormats = {
+                "MMMM dd yyyy",      // February 14 2024
+                "MMM dd yyyy",       // Feb 14 2024
+                "dd/MM/yyyy",        // 14/03/2024
+                "dd-MMM-yyyy",       // 14-Mar-2024
+                "dd.MM.yyyy"         // 05.06.2024
+        };
+
+        Date date;
+
+        for (String format : dateFormats) {
+            SimpleDateFormat inputFormat = new SimpleDateFormat(format, Locale.ENGLISH);
+            try {
+                date = inputFormat.parse(dateString);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+                assert date != null;
+                return outputFormat.format(date);
+            } catch (Exception e) {
+                // Continue to the next format
+//                SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+//                return outputFormat.format(new Date());
+            }
+        }
+        SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
+        return outputFormat.format(new Date());
     }
 
     private void checkRequestCamera() {
