@@ -355,10 +355,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     hour = hour.replaceAll("\n", " ");
                     hour = hour.trim();
                     hour = hour.replaceAll("O", "0");
+                    Log.v("TAGYHourClassName", hour);
                 }
             }
 
-            Log.v("TAGY", "Title: " + title);
+            Log.v("TAGY", "Title: " + title + " Hour: " + hour);
             if(title.equals("")){
                 //title is null
                 hour = processHour(hour);
@@ -409,15 +410,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                 }
                 if(hour.equals("")){
+                    hour = findHour(s);
+                }
+                if(hour.equals("")){
                     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     String formattedTime = timeFormat.format(calendar.getTime());
                     hour = formattedTime;
                 }else {
                     hour = processHour(hour);
-                    if(hour.equals("")){
-                        hour = findHour(s);
-                        hour = processHour(hour);
-                    }
+
                 }
 //                Log.v("TAGY", "dmy hour: " + daymonthyear + " " + hour);
                 Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);

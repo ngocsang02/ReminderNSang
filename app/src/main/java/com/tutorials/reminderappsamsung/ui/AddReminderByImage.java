@@ -326,7 +326,9 @@ public class AddReminderByImage extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String strTitle = title.getText().toString();
+//                Log.v("TAGYSave", "Title: " + strTitle);
                 if (!strTitle.isEmpty()) {
+//                    Log.v("TAGYSave", "true");
                     String strNote = note.getText().toString();
                     String strLocation = location.getText().toString();
 
@@ -340,6 +342,8 @@ public class AddReminderByImage extends AppCompatActivity {
 
                     if(formTime != null){
                         mReminder.setTime(formTime);
+                    }else {
+                        formTime = mReminder.getTime();
                     }
                     mReminder.setTitle(strTitle);
                     mReminder.setDate(formattedDate);
@@ -351,7 +355,7 @@ public class AddReminderByImage extends AppCompatActivity {
                         ReminderDatabase.getInstance(AddReminderByImage.this).getReminderDAO().insert(mReminder);
                         int id = ReminderDatabase.getInstance(AddReminderByImage.this).getReminderDAO().getLastItemId();
                         setAlarm(strTitle, formattedDate, formTime, id, strLocation, strNote);
-
+//                        Log.v("TAGYSave", "trueAlarm " + formTime);
                         Intent intent = new Intent(AddReminderByImage.this, MainActivity.class);
                         startActivity(intent);
                     }else {
@@ -418,7 +422,7 @@ public class AddReminderByImage extends AppCompatActivity {
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), id, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         String dateandtime = date + " " + time;
-        Log.v("TAGY", dateandtime);
+//        Log.v("TAGY", dateandtime);
         DateFormat formatter;
         if(dateandtime.contains("thg")){
             formatter = new SimpleDateFormat("EEE, MMM dd yyyy hh:mm", Locale.forLanguageTag("vi"));
