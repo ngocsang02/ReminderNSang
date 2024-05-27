@@ -245,7 +245,7 @@ public class CropImageActivity extends AppCompatActivity
                     try {
                         if(mCropImageUri != null){
                             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), mCropImageUri);
-                            Detector detector = new Detector(getBaseContext(), "detectposter.tflite", "labels2.txt");
+                            Detector detector = new Detector(getBaseContext(), "finaldetectposter.tflite", "labels2.txt");
                             detector.setup();
                             List<BoundingBox> boundingBoxes = detector.detect(bitmap);
                             //Log.v("TAGYBitmap", bitmap.getWidth() + " " + bitmap.getHeight());

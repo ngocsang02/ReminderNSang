@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void classifyImage(Bitmap frame) {
-        detector = new Detector(getBaseContext(), "poster2.tflite", "labels.txt");
+        detector = new Detector(getBaseContext(), "finaldetectinfposter.tflite", "labels.txt");
         detector.setup();
         List<BoundingBox> boundingBoxes = detector.detect(frame);
         String s = getTextFromImage(frame);
