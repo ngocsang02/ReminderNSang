@@ -38,4 +38,12 @@ public interface ReminderDAO {
 
     @Query("SELECT reminder_id FROM reminder_table ORDER BY reminder_id DESC LIMIT 1")
     int getLastItemId();
+
+    @Query("SELECT * FROM reminder_table WHERE reminder_title LIKE '%' || :textSearch || '%' " +
+            "OR reminder_date LIKE '%' || :textSearch || '%' " +
+            "OR reminder_time LIKE '%' || :textSearch || '%' " +
+            "OR reminder_location LIKE '%' || :textSearch || '%' " +
+            "OR reminder_description LIKE '%' || :textSearch || '%'")
+    List<Reminder> searchReminder(String textSearch);
+
 }

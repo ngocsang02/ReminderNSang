@@ -167,13 +167,14 @@ public class Adapter extends RecyclerView.Adapter<MyViewHolder> implements Filte
                 if(strSearch.isEmpty()){
                     reminderList = reminderListOld;
                 }else {
-                    List<Reminder> newReminderList = new ArrayList<>();
-                    for(Reminder rm: ReminderDatabase.getInstance(context).getReminderDAO().getAllReminder()){
-                        if(rm.getTitle().toLowerCase().contains(strSearch.toLowerCase())){
-                            newReminderList.add(rm);
-                        }
-                    }
-                    reminderList = newReminderList;
+//                    List<Reminder> newReminderList = new ArrayList<>();
+//                    for(Reminder rm: ReminderDatabase.getInstance(context).getReminderDAO().getAllReminder()){
+//                        if(rm.getTitle().toLowerCase().contains(strSearch.toLowerCase())){
+//                            newReminderList.add(rm);
+//                        }
+//                    }
+//                    reminderList = newReminderList;
+                    reminderList = ReminderDatabase.getInstance(context).getReminderDAO().searchReminder(strSearch);
                 }
 
                 FilterResults filterResults = new FilterResults();

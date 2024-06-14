@@ -1086,10 +1086,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Intent intent = new Intent(getApplicationContext(), AlarmBrodcast.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Cancel the alarm
-        am.cancel(pendingIntent);
-        Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
-        // Show toast or perform any other action
+       if(pendingIntent != null){
+           // Cancel the alarm
+           am.cancel(pendingIntent);
+           Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
+           // Show toast or perform any other action
+       }
     }
 
     private void updateRecyclerView() {

@@ -211,6 +211,8 @@ public class UpdateReminderItem extends AppCompatActivity {
 
                     if(formTime != null){
                         mReminder.setTime(formTime);
+                    }else {
+                        formTime = mReminder.getTime();
                     }
                     mReminder.setDate(formattedDate);
                     mReminder.setTitle(strTitle);
@@ -270,11 +272,12 @@ public class UpdateReminderItem extends AppCompatActivity {
 
         Intent intent = new Intent(getApplicationContext(), AlarmBrodcast.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT |PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE);
-
-        // Cancel the alarm
-        am.cancel(pendingIntent);
-        Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
-        // Show toast or perform any other action
+        if(pendingIntent != null){
+            // Cancel the alarm
+            am.cancel(pendingIntent);
+            // Show toast or perform any other action
+            Toast.makeText(getApplicationContext(), "Cancel Alarm", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setAlarm(String text, String date, String time, int id, String strLocation, String strNote) {
