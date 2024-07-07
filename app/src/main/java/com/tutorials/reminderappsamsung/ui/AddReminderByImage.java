@@ -211,19 +211,23 @@ public class AddReminderByImage extends AppCompatActivity {
 
         if(!timeString.equals("")){
             // Phân tích chuỗi thời gian thành các thành phần
-            String[] timeParts = timeString.split(":");
-            Log.v("TAGY", "timeParts " + timeParts[0] + " " + timeParts[1]);
-            int hour = Integer.parseInt(timeParts[0]);
-            int minute = Integer.parseInt(timeParts[1]);
+            try{
+                String[] timeParts = timeString.split(":");
+                Log.v("TAGY", "timeParts " + timeParts[0] + " " + timeParts[1]);
+                int hour = Integer.parseInt(timeParts[0]);
+                int minute = Integer.parseInt(timeParts[1]);
 
-            // Thiết lập TimePicker từ thời gian được phân tích
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                timePicker.setHour(hour);
-                timePicker.setMinute(minute);
-            } else {
-                // Cho các phiên bản Android cũ hơn
-                timePicker.setCurrentHour(hour);
-                timePicker.setCurrentMinute(minute);
+                // Thiết lập TimePicker từ thời gian được phân tích
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    timePicker.setHour(hour);
+                    timePicker.setMinute(minute);
+                } else {
+                    // Cho các phiên bản Android cũ hơn
+                    timePicker.setCurrentHour(hour);
+                    timePicker.setCurrentMinute(minute);
+                }
+            }catch (Exception e){
+
             }
         }
     }

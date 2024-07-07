@@ -24,6 +24,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -37,11 +38,17 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 import com.tutorials.reminderappsamsung.Notification.AlarmBrodcast;
@@ -55,6 +62,7 @@ import com.tutorials.reminderappsamsung.detect.BoundingBox;
 import com.tutorials.reminderappsamsung.detect.Detector;
 import com.tutorials.reminderappsamsung.ui.AddReminder;
 import com.tutorials.reminderappsamsung.ui.AddReminderByImage;
+import com.tutorials.reminderappsamsung.ui.ProgressBarActivity;
 import com.tutorials.reminderappsamsung.ui.SearchViewActivity;
 import com.tutorials.reminderappsamsung.ui.UpdateReminderItem;
 
@@ -116,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     List<Reminder> noCompletePast = new ArrayList<>();
     List<Reminder> noCompleteFuture = new ArrayList<>();
 
+    String sText = "";
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -280,7 +289,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri);
 //                Bitmap image = null;
 //                image = Bitmap.createScaledBitmap(bitmap, 640, 640, false);
-                    classifyImage(bitmap);
+//                    classifyImage(bitmap);
+
+                    getBoundingBoxTextMax(bitmap);
+                    Intent intent = new Intent(this, ProgressBarActivity.class);
+                    startActivity(intent);
 //                getTextFromImage(bitmap);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -293,6 +306,80 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
     }
+    private void getBoundingBoxTextMax(Bitmap bm){
+        InputImage image = InputImage.fromBitmap(bm, 0);
+        com.google.mlkit.vision.text.TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+        recognizer.process(image)
+                .addOnSuccessListener(new OnSuccessListener<Text>() {
+                    @Override
+                    public void onSuccess(Text text) {
+                        processTextBlock(text, bm);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, "Error Occurred!!!", Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+    private void processTextBlock(Text text, Bitmap originalBitmap) {
+        StringBuilder stringBuilder = new StringBuilder();
+        Rect largestRect = null;
+        int largestArea = 0;
+        for(Text.TextBlock block: text.getTextBlocks()){
+            stringBuilder.append(block.getText());
+            stringBuilder.append("\n");
+
+            // Log bounding box information
+            Rect boundingBox = block.getBoundingBox();
+            if (boundingBox != null) {
+                //Log.v("TAGYTextRecognition", "Block bounding box: " + boundingBox.toString());
+                int area = boundingBox.width() * boundingBox.height();
+                if (area > largestArea) {
+                    largestArea = area;
+                    largestRect = boundingBox;
+                }
+            }
+
+            for (Text.Line line : block.getLines()) {
+                for (Text.Element element : line.getElements()) {
+                    Rect elementBox = element.getBoundingBox();
+                    if (elementBox != null) {
+                        //Log.v("TAGYTextRecognition", "Element bounding box: " + elementBox.toString());
+                        int area = elementBox.width() * elementBox.height();
+                        if (area > largestArea) {
+                            largestArea = area;
+                            largestRect = elementBox;
+                        }
+                    }
+                }
+            }
+        }
+        if (largestRect != null) {
+            Log.v("TAGYTextRecognition", "Largest bounding box: " + largestRect.toString() + " with area: " + largestArea);
+            // Crop the bitmap using the largest bounding box
+            int left = Math.max(largestRect.left, 0);
+            int top = Math.max(largestRect.top, 0);
+            int width = Math.min(largestRect.width(), originalBitmap.getWidth() - left);
+            int height = Math.min(largestRect.height(), originalBitmap.getHeight() - top);
+            Bitmap croppedBitmapTextAreaMax = Bitmap.createBitmap(
+                    originalBitmap,
+                    left,
+                    top,
+                    width,
+                    height
+            );
+            sText = getTextFromImage(croppedBitmapTextAreaMax);
+            sText = sText.replaceAll("\n", " ");
+            Log.v("TAGYsText", sText);
+        }else {
+            sText = "";
+        }
+        classifyImage(originalBitmap);
+    }
 
     private void classifyImage(Bitmap frame) {
         detector = new Detector(getBaseContext(), "finaldetectinfposter.tflite", "labels.txt");
@@ -304,12 +391,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         location = findLocation(textFullPoster);
         s = s.trim().replaceAll("\\s+", " ");
         s = replaceString(s);
-        Log.v("TAGY", s);
-        if(boundingBoxes.isEmpty()){
+        String title = sText;
+        Log.v("TAGYsTextTitle", title);
+        if(boundingBoxes.isEmpty() && title.equals("")){
             Intent intent = new Intent(MainActivity.this, AddReminder.class);
             startActivity(intent);
-        }else {
-            String title = "";
+        }else if(!boundingBoxes.isEmpty()){
             String daymonthyear = "";
             String hour = "";
             for(BoundingBox bb: boundingBoxes){
@@ -359,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
-            Log.v("TAGY", "Title: " + title + " Hour: " + hour);
+//            Log.v("TAGY", "Title: " + title + " Hour: " + hour);
             if(title.equals("")){
                 //title is null
                 hour = processHour(hour);
@@ -432,6 +519,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
 
             //Log.v("TAGY", title + " " + daymonthyear + " " + location + " " + hour);
+        }
+        else {
+            String daymonthyear = "";
+            String hour = "";
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM dd yyyy", Locale.getDefault());
+            String formattedDate = dateFormat.format(calendar.getTime());
+            daymonthyear = formattedDate;
+
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            String formattedTime = timeFormat.format(calendar.getTime());
+            hour = formattedTime;
+
+            //                Log.v("TAGY", "dmy hour: " + daymonthyear + " " + hour);
+            Reminder reminder = new Reminder(daymonthyear, hour, title, "", false, location, 0);
+//                reminderDAO.insert(reminder);
+//                updateRecyclerView();
+            Intent intentAddReminderByImage = new Intent(MainActivity.this, AddReminderByImage.class);
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("reminder_item_by_image", reminder);
+            intentAddReminderByImage.putExtras(bundle);
+            startActivity(intentAddReminderByImage);
         }
     }
     public static String findLocation(String text){

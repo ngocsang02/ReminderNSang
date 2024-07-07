@@ -35,6 +35,9 @@
         android:theme="@style/Theme.ReminderAppSamSung"
         tools:targetApi="31">
         <activity
+            android:name=".ui.ProgressBarActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.SearchViewActivity"
             android:exported="false" />
         <activity

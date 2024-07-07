@@ -51,6 +51,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     implementation("com.google.android.gms:play-services-vision:20.1.3")
+    implementation("com.google.mlkit:text-recognition:16.0.0")
 
     implementation(project(":cropper"))
 
