@@ -21,8 +21,7 @@ Install app by my phone:
 ```
 •	Kết nối điện thoại với máy tính 
 •	Bật chế độ nhà phát triển
-•	Chọn “Cài đặt” -> “Cài đặt bổ sung” -> “Tùy chọn nhà phát triển” 
--> Chọn “Mở khóa OEM”, “Gỡ lỗi USB”, “Cài đặt qua USB”
+•	Chọn “Cài đặt” -> “Cài đặt bổ sung” -> “Tùy chọn nhà phát triển” -> Chọn “Mở khóa OEM”, “Gỡ lỗi USB”, “Cài đặt qua USB”
 •	Thực hiện "Run Application"
 ```
 </details>
